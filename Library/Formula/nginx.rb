@@ -1,15 +1,9 @@
 require 'formula'
 
 class Nginx < Formula
-  url 'http://nginx.org/download/nginx-0.8.54.tar.gz'
-  head 'http://nginx.org/download/nginx-0.9.7.tar.gz'
   homepage 'http://nginx.org/'
-
-  if ARGV.build_head?
-    md5 'efd94b736155f2c0b5267f50f09e7f67'
-  else
-    md5 '44df4eb6a22d725021288c570789046f'
-  end
+  url 'http://nginx.org/download/nginx-1.0.2.tar.gz'
+  md5 '8a528ccaab3ddba84e72443fa40b19e7'
 
   depends_on 'pcre'
 
@@ -55,7 +49,7 @@ class Nginx < Formula
     system "./configure", *args
     system "make install"
 
-    (prefix+'org.nginx.plist').write startup_plist
+    (prefix+'org.nginx.nginx.plist').write startup_plist
   end
 
   def caveats
@@ -69,8 +63,8 @@ any other web servers running port 80, of course.
 
 You can start nginx automatically on login with:
     mkdir -p ~/Library/LaunchAgents
-    cp #{prefix}/org.nginx.plist ~/Library/LaunchAgents/
-    launchctl load -w ~/Library/LaunchAgents/org.nginx.plist
+    cp #{prefix}/org.nginx.nginx.plist ~/Library/LaunchAgents/
+    launchctl load -w ~/Library/LaunchAgents/org.nginx.nginx.plist
 
     CAVEATS
   end
@@ -82,7 +76,7 @@ You can start nginx automatically on login with:
 <plist version="1.0">
   <dict>
     <key>Label</key>
-    <string>org.nginx</string>
+    <string>org.nginx.nginx</string>
     <key>RunAtLoad</key>
     <true/>
     <key>KeepAlive</key>

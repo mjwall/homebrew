@@ -1,6 +1,6 @@
 require 'formula'
 
-class Emacs <Formula
+class Emacs < Formula
   url 'http://ftp.gnu.org/pub/gnu/emacs/emacs-23.3.tar.bz2'
   md5 'a673c163b4714362b94ff6096e4d784a'
   homepage 'http://www.gnu.org/software/emacs/'
@@ -64,6 +64,12 @@ class Emacs <Formula
             "--enable-locallisppath=#{HOMEBREW_PREFIX}/share/emacs/site-lisp",
             "--infodir=#{info}/emacs"]
 
+    if ARGV.build_head? and File.exists? "./autogen/copy_autogen"
+      opoo "Using copy_autogen"
+      puts "See https://github.com/mxcl/homebrew/issues/4852"
+      system "autogen/copy_autogen"
+    end
+
     if ARGV.include? "--cocoa"
       args << "--with-ns" << "--disable-ns-self-contained"
       system "./configure", *args
@@ -74,6 +80,7 @@ class Emacs <Formula
       bin.mkpath
       ln_s prefix+'Emacs.app/Contents/MacOS/Emacs', bin+'emacs'
       ln_s prefix+'Emacs.app/Contents/MacOS/bin/emacsclient', bin
+      ln_s prefix+'Emacs.app/Contents/MacOS/bin/etags', bin
     else
       if ARGV.include? "--with-x"
         args << "--with-x"
