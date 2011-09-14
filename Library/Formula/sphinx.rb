@@ -1,15 +1,34 @@
 require 'formula'
 
+class Libstemmer < Formula
+  # upstream is constantly changing the tarball,
+  # so doing checksumv verification here would require
+  # constant, rapid updates to this formula.
+  head 'http://snowball.tartarus.org/dist/libstemmer_c.tgz'
+  homepage 'http://snowball.tartarus.org/'
+end
+
 class Sphinx < Formula
-  url 'http://sphinxsearch.com/files/sphinx-2.0.1-beta.tar.gz'
+  url 'http://sphinxsearch.com/downloads/sphinx-0.9.9.tar.gz'
   homepage 'http://www.sphinxsearch.com'
-  md5 '95c217d81d0b7a4ff73d5297318c3481'
+  md5 '7b9b618cb9b378f949bb1b91ddcc4f54'
   head 'http://sphinxsearch.googlecode.com/svn/trunk/'
 
   fails_with_llvm "fails with: ld: rel32 out of range in _GetPrivateProfileString from /usr/lib/libodbc.a(SQLGetPrivateProfileString.o)"
 
   def install
-    args = ["--prefix=#{prefix}", "--disable-debug", "--disable-dependency-tracking"]
+    lstem = Pathname.pwd+'libstemmer_c'
+    lstem.mkpath
+    Libstemmer.new.brew { mv Dir['*'], lstem }
+
+    args = ["--prefix=#{prefix}",
+            "--disable-debug",
+            "--disable-dependency-tracking",
+            "--localstatedir=#{var}"]
+
+    # always build with libstemmer support
+    args << "--with-libstemmer"
+
     # configure script won't auto-select PostgreSQL
     args << "--with-pgsql" if `/usr/bin/which pg_config`.size > 0
     args << "--without-mysql" if `/usr/bin/which mysql`.size <= 0
@@ -20,6 +39,8 @@ class Sphinx < Formula
 
   def caveats
     <<-EOS.undent
+    Sphinx has been compiled with libstemmer support.
+
     Sphinx depends on either MySQL or PostreSQL as a datasource.
 
     You can install these with Homebrew with:
