@@ -12,11 +12,12 @@ class RBashCompletion < Formula
 end
 
 class R < Formula
-  url 'http://cran.r-project.org/src/base/R-2/R-2.13.1.tar.gz'
-  homepage 'http://www.r-project.org/'
-  md5 '28dd0d68ac3a0eab93fe7035565a1c30'
+  homepage 'http://www.r-project.org'
+  url 'http://cran.r-project.org/src/base/R-2/R-2.14.1.tar.gz'
+  md5 'ba5b6fb15b660670ea29b885348f322a'
 
   depends_on 'valgrind' if valgrind?
+  depends_on 'readline'
 
   def options
     [
@@ -70,6 +71,9 @@ class R < Formula
     To use this Framework with IDEs such as RStudio, it must be linked
     to the standard OS X location:
       ln -s "#{prefix}/R.framework" /Library/Frameworks
+
+    To enable rJava support, run the following command:
+      R CMD javareconf JAVA_CPPFLAGS=-I/System/Library/Frameworks/JavaVM.framework/Headers
     EOS
   end
 end

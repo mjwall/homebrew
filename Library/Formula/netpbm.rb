@@ -2,8 +2,8 @@ require 'formula'
 
 class Netpbm < Formula
   homepage 'http://netpbm.sourceforge.net'
-  url 'http://sourceforge.net/projects/netpbm/files/super_stable/10.35.80/netpbm-10.35.80.tgz'
-  md5 '2edf98b802a82e5367fc52382e9ac144'
+  url 'http://sourceforge.net/projects/netpbm/files/super_stable/10.35.82/netpbm-10.35.82.tgz'
+  md5 'fcae2fc7928ad7d31b0540ec0c3e710b'
   head 'http://netpbm.svn.sourceforge.net/svnroot/netpbm/trunk'
 
   depends_on "libtiff"
@@ -42,7 +42,9 @@ class Netpbm < Formula
 
     Dir.chdir stage_dir do
       prefix.install %w{ bin include lib misc }
-      share.install Dir['man']
+      # do man pages explicitly; otherwise a junk file is installed in man/web
+      man1.install Dir['man/man1/*.1']
+      man5.install Dir['man/man5/*.5']
       lib.install Dir['link/*.a']
     end
   end

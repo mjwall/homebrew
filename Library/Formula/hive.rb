@@ -1,9 +1,9 @@
 require 'formula'
 
 class Hive < Formula
-  url 'http://www.apache.org/dyn/closer.cgi?path=hadoop/hive/hive-0.5.0/hive-0.5.0-bin.tar.gz'
+  url 'http://www.apache.org/dyn/closer.cgi?path=hive/hive-0.8.0/hive-0.8.0-bin.tar.gz'
   homepage 'http://hive.apache.org'
-  md5 '2d3b47ceaea6d5cdeaabc544aa9c2c28'
+  md5 '9aca92b683da8955aca3beb5a438d2f9'
 
   depends_on 'hadoop'
 
@@ -31,7 +31,8 @@ class Hive < Formula
     After installation, set $HIVE_HOME in your profile:
       export HIVE_HOME=#{libexec}
 
-    You may also need to set JAVA_HOME.
+    You may need to set JAVA_HOME:
+      export JAVA_HOME="$(/usr/libexec/java_home)"
     EOS
   end
 end
