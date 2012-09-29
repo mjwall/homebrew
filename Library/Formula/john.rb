@@ -3,7 +3,7 @@ require 'formula'
 class John < Formula
   homepage 'http://www.openwall.com/john/'
   url 'http://www.openwall.com/john/g/john-1.7.9.tar.bz2'
-  md5 '45f54fc59386ecd67daaef9f19781d93'
+  sha1 '8f77bdd42b7cf94ec176f55ea69c4da9b2b8fe3b'
 
   fails_with :llvm do
     build 2334
@@ -16,7 +16,7 @@ class John < Formula
     arch = Hardware.is_64_bit? ? '64' : 'sse2'
 
     cd 'src' do
-      system "make clean macosx-x86-#{arch}"
+      system "make", "clean", "macosx-x86-#{arch}"
     end
 
     rm 'README'

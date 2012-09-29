@@ -1,12 +1,14 @@
 require 'formula'
 
 class Fuse4x < Formula
-  homepage 'http://fuse4x.org/'
-  url 'https://github.com/fuse4x/fuse.git', :tag => "fuse4x_0_9_0"
-  version "0.9.0"
+  homepage 'http://fuse4x.github.com'
+  url 'https://github.com/fuse4x/fuse/tarball/fuse4x_0_9_1'
+  sha1 '31eff485411f106daa81ef6c7c3d31abbdcd41b4'
 
-  depends_on "automake" => :build
-  depends_on "libtool" => :build
+  # Always use newer versions of these tools
+  depends_on 'automake' => :build
+  depends_on 'libtool' => :build
+
   depends_on 'gettext'
   depends_on 'fuse4x-kext'
 

@@ -3,13 +3,13 @@ require 'formula'
 class Gshhs < Formula
   homepage 'http://gmt.soest.hawaii.edu/'
   url 'ftp://ftp.soest.hawaii.edu/gmt/gshhs-2.2.0.tar.bz2'
-  md5 'db98bff37adc0d51fdf0ffa3834d45ad'
+  sha1 '786d58b9a335d3bacb37f40f21ee3bfbb424cd10'
 end
 
 class Gmt < Formula
   homepage 'http://gmt.soest.hawaii.edu/'
-  url 'ftp://ftp.soest.hawaii.edu/gmt/gmt-4.5.7.tar.bz2'
-  md5 'fc8a4a546ff8572c225aa7bdb56bbdf8'
+  url 'ftp://ftp.soest.hawaii.edu/gmt/gmt-4.5.8.tar.bz2'
+  sha1 '823783c1abc9a7e0493c35661e516d4f607fff17'
 
   depends_on 'gdal'
   depends_on 'netcdf'

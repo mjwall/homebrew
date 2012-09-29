@@ -4,7 +4,7 @@ require 'cmd/untap'
 module Homebrew extend self
 
   def update
-    abort "Please `brew install git' first." unless which_s "git"
+    abort "Please `brew install git' first." unless which "git"
 
     # ensure GIT_CONFIG is unset as we need to operate on .git/config
     ENV.delete('GIT_CONFIG')
@@ -20,10 +20,15 @@ module Homebrew extend self
     new_files = []
     Dir["Library/Taps/*"].each do |tapd|
       cd tapd do
-        updater = Updater.new
-        updater.pull!
-        report.merge!(updater.report) do |key, oldval, newval|
-          oldval.concat(newval)
+        begin
+          updater = Updater.new
+          updater.pull!
+          report.merge!(updater.report) do |key, oldval, newval|
+            oldval.concat(newval)
+          end
+        rescue
+          tapd =~ %r{^Library/Taps/(\w+)-(\w+)}
+          onoe "Failed to update tap: #$1/#$2"
         end
       end
     end

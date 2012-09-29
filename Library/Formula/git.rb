@@ -1,30 +1,26 @@
 require 'formula'
 
 class GitManuals < Formula
-  url 'http://git-core.googlecode.com/files/git-manpages-1.7.9.6.tar.gz'
-  sha1 '43441aaa208b1f948f5a006e818a1a34dcda6740'
+  url 'http://git-core.googlecode.com/files/git-manpages-1.7.12.1.tar.gz'
+  sha1 '2d9c267c5370cdceb2e67f67abf5b152b0c18db9'
 end
 
 class GitHtmldocs < Formula
-  url 'http://git-core.googlecode.com/files/git-htmldocs-1.7.9.6.tar.gz'
-  sha1 'e744796212ac536ac1b9b1d84e750cb02775ac0f'
+  url 'http://git-core.googlecode.com/files/git-htmldocs-1.7.12.1.tar.gz'
+  sha1 'b42d5db34612825676d0a231cf9c566f8ad45e9f'
 end
 
 class Git < Formula
   homepage 'http://git-scm.com'
-  url 'http://git-core.googlecode.com/files/git-1.7.9.6.tar.gz'
-  sha1 '71c5a5acdef77cd8d29a4ae5d4fe7f2889f495b5'
+  url 'http://git-core.googlecode.com/files/git-1.7.12.1.tar.gz'
+  sha1 'c5227b5202947bba3d63dca72662fad02d208800'
 
   head 'https://github.com/git/git.git'
 
-  depends_on 'pcre' if ARGV.include? '--with-pcre'
+  depends_on 'pcre' if build.include? 'with-pcre'
 
-  def options
-    [
-      ['--with-blk-sha1', 'compile with the optimized SHA1 implementation'],
-      ['--with-pcre', 'compile with the PCRE library'],
-    ]
-  end
+  option 'with-blk-sha1', 'Compile with the block-optimized SHA1 implementation'
+  option 'with-pcre', 'Compile with the PCRE library'
 
   def install
     # If these things are installed, tell Git build system to not use them
@@ -33,15 +29,15 @@ class Git < Formula
     ENV['V'] = '1' # build verbosely
     ENV['NO_R_TO_GCC_LINKER'] = '1' # pass arguments to LD correctly
     ENV['NO_GETTEXT'] = '1'
-    # workaround for users of perlbrew
-    ENV['PERL_PATH'] = which 'perl'
+    ENV['PERL_PATH'] = which 'perl' # workaround for users of perlbrew
+    ENV['PYTHON_PATH'] = which 'python' # python can be brewed or unbrewed
 
     # Clean XCode 4.x installs don't include Perl MakeMaker
-    ENV['NO_PERL_MAKEMAKER']='1' if MacOS.lion?
+    ENV['NO_PERL_MAKEMAKER'] = '1' if MacOS.version >= :lion
 
-    ENV['BLK_SHA1'] = '1' if ARGV.include? '--with-blk-sha1'
+    ENV['BLK_SHA1'] = '1' if build.include? 'with-blk-sha1'
 
-    if ARGV.include? '--with-pcre'
+    if build.include? 'with-pcre'
       ENV['USE_LIBPCRE'] = '1'
       ENV['LIBPCREDIR'] = HOMEBREW_PREFIX
     end
@@ -52,8 +48,26 @@ class Git < Formula
                    "LDFLAGS=#{ENV.ldflags}",
                    "install"
 
+    # Install the OS X keychain credential helper
+    cd 'contrib/credential/osxkeychain' do
+      system "make", "CC=#{ENV.cc}",
+                     "CFLAGS=#{ENV.cflags}",
+                     "LDFLAGS=#{ENV.ldflags}"
+      bin.install 'git-credential-osxkeychain'
+      system "make", "clean"
+    end
+
+    # Install git-subtree
+    cd 'contrib/subtree' do
+      system "make", "CC=#{ENV.cc}",
+                     "CFLAGS=#{ENV.cflags}",
+                     "LDFLAGS=#{ENV.ldflags}"
+      bin.install 'git-subtree'
+    end
+
     # install the completion script first because it is inside 'contrib'
     (prefix+'etc/bash_completion.d').install 'contrib/completion/git-completion.bash'
+    (prefix+'etc/bash_completion.d').install 'contrib/completion/git-prompt.sh'
     (share+'git-core').install 'contrib'
 
     # We could build the manpages ourselves, but the build process depends
@@ -63,11 +77,17 @@ class Git < Formula
   end
 
   def caveats; <<-EOS.undent
-    Bash completion has been installed to:
-      #{etc}/bash_completion.d
+    The OS X keychain credential helper has been installed to:
+      #{HOMEBREW_PREFIX}/bin/git-credential-osxkeychain
 
     The 'contrib' directory has been installed to:
       #{HOMEBREW_PREFIX}/share/git-core/contrib
     EOS
+  end
+
+  def test
+    HOMEBREW_REPOSITORY.cd do
+      `#{bin}/git ls-files -- bin`.chomp == 'bin/brew'
+    end
   end
 end

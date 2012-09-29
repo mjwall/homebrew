@@ -2,23 +2,23 @@ require 'formula'
 
 class X264 < Formula
   homepage 'http://www.videolan.org/developers/x264.html'
-  # The version is _not_ 2245. See http://www.x264.nl/x264/changelog.txt for
-  # the revision numbers that are attached to each commit.
-  url 'http://download.videolan.org/pub/videolan/x264/snapshots/x264-snapshot-20120327-2245-stable.tar.bz2'
-  version 'r2184'
-  md5 '0660e5829dc7f621bb98124440e38924'
+  url 'http://download.videolan.org/pub/videolan/x264/snapshots/x264-snapshot-20120812-2245-stable.tar.bz2'
+  sha1 '4be913fb12cd5b3628edc68dedb4b6e664eeda0a'
+  version 'r2197.4' # brew install -v --HEAD x264 will display the version.
 
-  head 'git://git.videolan.org/x264.git'
+  head 'http://git.videolan.org/git/x264.git', :branch => 'stable'
 
   depends_on 'yasm' => :build
 
-  def options
-    [["--10-bit", "Make a 10-bit x264. (default: 8-bit)"]]
-  end
+  option '10-bit', 'Build a 10-bit x264 (default: 8-bit)'
 
   def install
+    if build.head?
+      ENV['GIT_DIR'] = cached_download/'.git'
+      system './version.sh'
+    end
     args = ["--prefix=#{prefix}", "--enable-shared"]
-    args << "--bit-depth=10" if ARGV.include?('--10-bit')
+    args << "--bit-depth=10" if build.include? '10-bit'
 
     system "./configure", *args
 
@@ -30,5 +30,13 @@ class X264 < Formula
     end
 
     system "make install"
+  end
+
+  def caveats; <<-EOS.undent
+    Because x264 installs its library with a version number that changes,
+    any of these that you have installed should be reinstalled each time you
+    upgrade x264.
+       avidemux, ffmbc, ffmpeg, gst-plugins-ugly
+    EOS
   end
 end

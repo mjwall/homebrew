@@ -1,14 +1,12 @@
 require 'formula'
 
 class SeleniumServerStandalone < Formula
-  url 'http://selenium.googlecode.com/files/selenium-server-standalone-2.20.0.jar'
   homepage 'http://seleniumhq.org/'
-  sha1 '8d387cdd61e3df9134e59eec6867a0f6a7e1933d'
+  url 'http://selenium.googlecode.com/files/selenium-server-standalone-2.25.0.jar'
+  sha1 '8e2b23874a6d3316079cf606ce7f75d221305934'
 
   def install
     prefix.install "selenium-server-standalone-#{version}.jar"
-    plist_path.write startup_plist
-    plist_path.chmod 0644
   end
 
   def caveats; <<-EOS
