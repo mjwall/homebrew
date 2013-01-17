@@ -2,8 +2,8 @@ require 'formula'
 
 class RakudoStar < Formula
   homepage 'http://rakudo.org/'
-  url 'https://github.com/downloads/rakudo/star/rakudo-star-2012.07.tar.gz'
-  sha256 '684cb3bb1f8fb95be10fae8d778dec41082e8f5d617aa99e919210e70b7e1b3d'
+  url 'http://rakudo.org/downloads/star/rakudo-star-2012.12.tar.gz'
+  sha256 'b5b673fe621c69ac7953a40e62f6a56a1563b97910f36efa68fc5d63a5320568'
 
   depends_on 'gmp' => :optional
   depends_on 'icu4c' => :optional

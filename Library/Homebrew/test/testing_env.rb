@@ -17,6 +17,7 @@ require 'utils'
 # homebrew tree, and we do want to test everything :)
 HOMEBREW_PREFIX=Pathname.new '/private/tmp/testbrew/prefix'
 HOMEBREW_REPOSITORY=HOMEBREW_PREFIX
+HOMEBREW_LIBRARY=HOMEBREW_REPOSITORY+"Library"
 HOMEBREW_CACHE=HOMEBREW_PREFIX.parent+"cache"
 HOMEBREW_CACHE_FORMULA=HOMEBREW_PREFIX.parent+"formula_cache"
 HOMEBREW_CELLAR=HOMEBREW_PREFIX.parent+"cellar"
@@ -87,4 +88,11 @@ module VersionAssertions
   def assert_version_nil url
     assert_nil Version.parse(url)
   end
+end
+
+module Test::Unit::Assertions
+  def assert_empty(obj, msg=nil)
+    assert_respond_to(obj, :empty?, msg)
+    assert(obj.empty?, msg)
+  end if RUBY_VERSION.to_f <= 1.8
 end

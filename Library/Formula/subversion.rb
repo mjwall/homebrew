@@ -59,8 +59,8 @@ end
 
 class Subversion < Formula
   homepage 'http://subversion.apache.org/'
-  url 'http://www.apache.org/dyn/closer.cgi?path=subversion/subversion-1.7.6.tar.bz2'
-  sha1 '5b76a9f49e2c4bf064041a7d6b1bfcc3aa4ed068'
+  url 'http://www.apache.org/dyn/closer.cgi?path=subversion/subversion-1.7.8.tar.bz2'
+  sha1 '12c7d8d5414bba74c9777c4d1dae74f152df63c2'
 
   option :universal
   option 'java', 'Build Java bindings'
@@ -71,9 +71,7 @@ class Subversion < Formula
 
   depends_on 'pkg-config' => :build
 
-  # If Subversion can use the Lion versions of these, please
-  # open an issue with a patch. Build against Homebrewed versions
-  # for consistency. - @adamv
+  # Always build against Homebrew versions instead of system versions for consistency.
   depends_on 'neon'
   depends_on 'sqlite'
   depends_on 'serf'
@@ -113,7 +111,14 @@ class Subversion < Formula
     cause "core.c:1: error: bad value (native) for -march= switch"
   end if build_perl? or build_python? or build_ruby?
 
+  def apr_bin
+    superbin or "/usr/bin"
+  end
+
   def install
+    # We had weird issues with "make" apparently hanging on first run: https://github.com/mxcl/homebrew/issues/13226
+    ENV.deparallelize
+
     if build_java?
       unless build.universal?
         opoo "A non-Universal Java build was requested."
@@ -133,9 +138,10 @@ class Subversion < Formula
     # Don't mess with Apache modules (since we're not sudo)
     args = ["--disable-debug",
             "--prefix=#{prefix}",
+            "--with-apr=#{apr_bin}",
             "--with-ssl",
             "--with-zlib=/usr",
-            "--with-sqlite=#{HOMEBREW_PREFIX}",
+            "--with-sqlite=#{Formula.factory('sqlite').opt_prefix}",
             "--with-serf=#{HOMEBREW_PREFIX}",
             # use our neon, not OS X's
             "--disable-neon-version-check",
@@ -161,7 +167,6 @@ class Subversion < Formula
     end
 
     if build_perl?
-      ENV.j1 # This build isn't parallel safe
       # Remove hard-coded ppc target, add appropriate ones
       if build.universal?
         arches = "-arch x86_64 -arch i386"
@@ -181,17 +186,15 @@ class Subversion < Formula
           "$(SWIG_INCLUDES) #{arches} -g -pipe -fno-common -DPERL_DARWIN -fno-strict-aliasing -I/usr/local/include -I#{perl_core}"
       end
       system "make swig-pl"
-      system "make install-swig-pl"
+      system "make", "install-swig-pl", "DESTDIR=#{prefix}"
     end
 
     if build_java?
-      ENV.j1 # This build isn't parallel safe
       system "make javahl"
       system "make install-javahl"
     end
 
     if build_ruby?
-      ENV.j1 # This build isn't parallel safe
       system "make swig-rb"
       system "make install-swig-rb"
     end
@@ -204,6 +207,14 @@ class Subversion < Formula
       s += <<-EOS.undent
         You may need to add the Python bindings to your PYTHONPATH from:
           #{HOMEBREW_PREFIX}/lib/svn-python
+
+      EOS
+    end
+
+    if build_perl?
+      s += <<-EOS.undent
+        The perl bindings are located in various subdirectories of:
+          #{prefix}/Library/Perl
 
       EOS
     end
@@ -240,6 +251,7 @@ class Subversion < Formula
     return s.empty? ? nil : s
   end
 end
+
 __END__
 --- subversion/bindings/swig/perl/native/Makefile.PL.in~	2011-07-16 04:47:59.000000000 -0700
 +++ subversion/bindings/swig/perl/native/Makefile.PL.in	2012-06-27 17:45:57.000000000 -0700

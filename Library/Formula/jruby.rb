@@ -2,8 +2,8 @@ require 'formula'
 
 class Jruby < Formula
   homepage 'http://www.jruby.org'
-  url 'http://jruby.org.s3.amazonaws.com/downloads/1.6.8/jruby-bin-1.6.8.tar.gz'
-  sha1 'b1d191723b34255e5833946c6591bc5e89379d8c'
+  url 'http://jruby.org.s3.amazonaws.com/downloads/1.7.2/jruby-bin-1.7.2.tar.gz'
+  sha1 'a51611bf23993f3b6bb5e781b97100ea99f4e702'
 
   env :std
 

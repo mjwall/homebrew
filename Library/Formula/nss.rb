@@ -1,11 +1,13 @@
 require 'formula'
 
 class Nss < Formula
-  url 'http://ftp.mozilla.org/pub/mozilla.org/security/nss/releases/NSS_3_12_10_RTM/src/nss-3.12.10.tar.gz'
   homepage 'http://www.mozilla.org/projects/security/pki/nss/'
-  sha1 '229f65c8d4e2c1b34e145253bceddada5a82a142'
+  url 'http://ftp.mozilla.org/pub/mozilla.org/security/nss/releases/NSS_3_14_1_RTM/src/nss-3.14.1.tar.gz'
+  sha1 '764773e869aaee314e6f3ca675e04c55075d88a8'
 
   depends_on 'nspr'
+
+  keg_only 'NSS installs a libssl which conflicts with OpenSSL.'
 
   def install
     ENV.deparallelize
@@ -70,7 +72,7 @@ includedir=${prefix}/include/nss
 
 Name: NSS
 Description: Mozilla Network Security Services
-Version: 3.12.10
+Version: 3.14.1
 Requires: nspr
 Libs: -L${libdir} -lnss3 -lnssutil3 -lsmime3 -lssl3
 Cflags: -I${includedir}

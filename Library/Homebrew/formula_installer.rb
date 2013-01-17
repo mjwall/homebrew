@@ -3,6 +3,7 @@ require 'formula'
 require 'keg'
 require 'tab'
 require 'bottles'
+require 'caveats'
 
 class FormulaInstaller
   attr :f
@@ -15,14 +16,18 @@ class FormulaInstaller
   def initialize ff, tab=nil
     @f = ff
     @tab = tab
-    @show_header = true
+    @show_header = false
     @ignore_deps = ARGV.ignore_deps? || ARGV.interactive?
     @install_bottle = install_bottle? ff
+
+    @@attempted ||= Set.new
 
     check_install_sanity
   end
 
   def check_install_sanity
+    raise FormulaInstallationAlreadyAttemptedError, f if @@attempted.include? f
+
     if f.installed?
       msg = "#{f}-#{f.installed_version} already installed"
       msg << ", it's just not linked" if not f.linked_keg.symlink? and not f.keg_only?
@@ -73,6 +78,12 @@ class FormulaInstaller
       needed_deps = []
       needed_reqs = []
 
+      # HACK: If readline is present in the dependency tree, it will clash
+      # with the stdlib's Readline module when the debugger is loaded
+      if f.recursive_deps.any? { |d| d.name == "readline" } and ARGV.debug?
+        ENV['HOMEBREW_NO_READLINE'] = '1'
+      end
+
       ARGV.filter_for_dependencies do
         needed_deps = f.recursive_deps.reject{ |d| d.installed? }
         needed_reqs = f.recursive_requirements.reject { |r| r.satisfied? }
@@ -99,14 +110,12 @@ class FormulaInstaller
           end
         end
         # now show header as all the deps stuff has clouded the original issue
-        show_header = true
+        @show_header = true
       end
     end
 
-    oh1 "Installing #{f}" if show_header
+    oh1 "Installing #{Tty.green}#{f}#{Tty.reset}" if show_header
 
-    @@attempted ||= Set.new
-    raise FormulaInstallationAlreadyAttemptedError, f if @@attempted.include? f
     @@attempted << f
 
     if install_bottle
@@ -126,7 +135,7 @@ class FormulaInstaller
     fi = FormulaInstaller.new(dep, dep_tab)
     fi.ignore_deps = true
     fi.show_header = false
-    oh1 "Installing #{f} dependency: #{dep}"
+    oh1 "Installing #{f} dependency: #{Tty.green}#{dep}#{Tty.reset}"
     outdated_keg.unlink if outdated_keg
     fi.install
     fi.caveats
@@ -137,37 +146,19 @@ class FormulaInstaller
   end
 
   def caveats
-    unless f.caveats.to_s.strip.empty?
-      ohai "Caveats", f.caveats
-      @show_summary_heading = true
-    end
-
-    if f.keg_only?
-      ohai 'Caveats', f.keg_only_text
-      @show_summary_heading = true
-    else
+    if (not f.keg_only?) and ARGV.homebrew_developer?
       audit_bin
       audit_sbin
       audit_lib
       check_manpages
       check_infopages
-      check_m4
     end
 
-    keg = Keg.new(f.prefix)
+    c = Caveats.new(f)
 
-    if keg.completion_installed? :bash
-      ohai 'Caveats', <<-EOS.undent
-        Bash completion has been installed to:
-          #{HOMEBREW_PREFIX}/etc/bash_completion.d
-        EOS
-    end
-
-    if keg.completion_installed? :zsh
-      ohai 'Caveats', <<-EOS.undent
-        zsh completion has been installed to:
-          #{HOMEBREW_PREFIX}/share/zsh/site-functions
-        EOS
+    unless c.empty?
+      @show_summary_heading = true
+      ohai 'Caveats', c.caveats
     end
   end
 
@@ -190,6 +181,7 @@ class FormulaInstaller
     fix_install_names
 
     ohai "Summary" if ARGV.verbose? or show_summary_heading
+    print "🍺  " if MacOS.version >= :lion
     print "#{f.prefix}: #{f.prefix.abv}"
     print ", built in #{pretty_duration build_time}" if build_time
     puts
@@ -283,11 +275,11 @@ class FormulaInstaller
   end
 
   def install_plist
-    # Install a plist if one is defined
-    if f.startup_plist and not f.plist_path.exist?
-      f.plist_path.write f.startup_plist
-      f.plist_path.chmod 0644
-    end
+    return unless f.plist
+    # A plist may already exist if we are installing from a bottle
+    f.plist_path.unlink if f.plist_path.exist?
+    f.plist_path.write f.plist
+    f.plist_path.chmod 0644
   end
 
   def fix_install_names
@@ -321,7 +313,7 @@ class FormulaInstaller
 
   def pour
     fetched, downloader = f.fetch
-    f.verify_download_integrity fetched
+    f.verify_download_integrity fetched unless downloader.local_bottle_path
     HOMEBREW_CELLAR.cd do
       downloader.stage
     end
@@ -383,7 +375,7 @@ class FormulaInstaller
     return unless f.lib.directory?
 
     valid_extensions = %w(.a .dylib .framework .jnilib .la .o .so
-                          .jar .prl .pm)
+                          .jar .prl .pm .sh)
     non_libraries = f.lib.children.select do |g|
       next if g.directory?
       not valid_extensions.include? g.extname
@@ -429,25 +421,6 @@ class FormulaInstaller
   def audit_lib
     check_jars
     check_non_libraries
-  end
-
-  def check_m4
-    # Newer versions of Xcode don't come with autotools
-    return unless MacOS::Xcode.provides_autotools?
-
-    # If the user has added our path to dirlist, don't complain
-    return if File.open("/usr/share/aclocal/dirlist") do |dirlist|
-      dirlist.grep(%r{^#{HOMEBREW_PREFIX}/share/aclocal$}).length > 0
-    end rescue false
-
-    # Check for installed m4 files
-    if Dir[f.share+"aclocal/*.m4"].length > 0
-      opoo 'm4 macros were installed to "share/aclocal".'
-      puts "Homebrew does not append \"#{HOMEBREW_PREFIX}/share/aclocal\""
-      puts "to \"/usr/share/aclocal/dirlist\". If an autoconf script you use"
-      puts "requires these m4 macros, you'll need to add this path manually."
-      @show_summary_heading = true
-    end
   end
 end
 
