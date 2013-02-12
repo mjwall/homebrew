@@ -1,4 +1,5 @@
 require 'extend/pathname'
+require 'formula_lock'
 
 class Keg < Pathname
   def initialize path
@@ -59,6 +60,10 @@ class Keg < Pathname
 
   def fname
     parent.basename.to_s
+  end
+
+  def lock
+    FormulaLock.new(fname).with_lock { yield }
   end
 
   def linked_keg_record

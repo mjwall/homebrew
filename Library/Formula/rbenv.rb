@@ -8,13 +8,14 @@ class Rbenv < Formula
   head 'https://github.com/sstephenson/rbenv.git'
 
   def install
+    inreplace 'libexec/rbenv', '/usr/local', HOMEBREW_PREFIX
     prefix.install Dir['*']
 
-    var_lib = "#{HOMEBREW_PREFIX}/var/lib/rbenv/"
+    var_lib = var/'lib/rbenv'
     ['plugins', 'versions'].each do |dir|
-      var_dir = "#{var_lib}/#{dir}"
-      mkdir_p var_dir
-      ln_sf var_dir, "#{prefix}/#{dir}"
+      var_dir = var_lib/dir
+      var_dir.mkpath
+      ln_sf var_dir, (prefix/dir)
     end
   end
 
