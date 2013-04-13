@@ -2,8 +2,8 @@ require 'formula'
 
 class Redis < Formula
   homepage 'http://redis.io/'
-  url 'http://redis.googlecode.com/files/redis-2.6.9.tar.gz'
-  sha1 '519fc3d1e7a477217f1ace73252be622e0101001'
+  url 'http://redis.googlecode.com/files/redis-2.6.12.tar.gz'
+  sha1 '4215ff7cb718284e29910947ac9894d0679f2299'
 
   head 'https://github.com/antirez/redis.git', :branch => 'unstable'
 
@@ -60,8 +60,6 @@ class Redis < Formula
         </array>
         <key>RunAtLoad</key>
         <true/>
-        <key>UserName</key>
-        <string>#{`whoami`.chomp}</string>
         <key>WorkingDirectory</key>
         <string>#{var}</string>
         <key>StandardErrorPath</key>
