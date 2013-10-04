@@ -2,8 +2,10 @@ require 'formula'
 
 class Rust < Formula
   homepage 'http://www.rust-lang.org/'
-  url 'http://static.rust-lang.org/dist/rust-0.6.tar.gz'
-  sha256 'e11cb529a1e20f27d99033181a9e0e131817136b46d2742f0fa1afa1210053e5'
+  url 'http://static.rust-lang.org/dist/rust-0.8.tar.gz'
+  sha256 '42f791ab1537357fe0f63d67ffe6bcb64ecf16b2bd3f1484ab589823f5914182'
+
+  head 'https://github.com/mozilla/rust.git'
 
   fails_with :clang do
     build 318
@@ -20,7 +22,7 @@ class Rust < Formula
 
   def test
     system "#{bin}/rustc"
-    system "#{bin}/rustdoc"
-    system "#{bin}/cargo"
+    system "#{bin}/rustdoc -h"
+    system "#{bin}/rustpkg -v"
   end
 end

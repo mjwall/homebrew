@@ -2,11 +2,13 @@ require 'formula'
 
 class Elasticsearch < Formula
   homepage 'http://www.elasticsearch.org'
-  url 'http://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-0.20.6.tar.gz'
-  sha1 'f66a778ad94ea1dd69d18f8f89ce32c2383898eb'
-  head 'https://github.com/elasticsearch/elasticsearch.git'
+  url 'https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-0.90.5.tar.gz'
+  sha1 '8027a4ae1bef6876c7651b1590607c8ff6108820'
 
-  depends_on 'maven' if build.head?
+  head do
+    url 'https://github.com/elasticsearch/elasticsearch.git'
+    depends_on 'maven'
+  end
 
   def cluster_name
     "elasticsearch_#{ENV['USER']}"
@@ -65,6 +67,13 @@ class Elasticsearch < Formula
       # Replace paths to use libexec instead of lib
       s.gsub! /\$ES_HOME\/lib\//, "$ES_CLASSPATH/"
     end
+  end
+
+  def post_install
+    # Make sure runtime directories exist
+    (var/"elasticsearch/#{cluster_name}").mkpath
+    (var/"log/elasticsearch").mkpath
+    (var/"lib/elasticsearch/plugins").mkpath
   end
 
   def caveats; <<-EOS.undent

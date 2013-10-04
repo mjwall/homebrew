@@ -2,20 +2,36 @@ require 'formula'
 
 class Xmp < Formula
   homepage 'http://xmp.sourceforge.net'
-  url 'http://downloads.sourceforge.net/project/xmp/xmp/4.0.2/xmp-4.0.2.tar.gz'
-  sha1 '32c2d5884cd94cfbc442095200d625b9f7ec6d2d'
+  url 'http://downloads.sourceforge.net/project/xmp/xmp/4.0.6/xmp-4.0.6.tar.gz'
+  sha1 '61a7d68e4c37e7407bd35c783821bfbc2b639c87'
 
+  head do
+    url 'git://git.code.sf.net/p/xmp/xmp-cli'
+
+    depends_on 'autoconf' => :build
+    depends_on 'automake' => :build
+    depends_on 'libtool'  => :build
+  end
+
+  depends_on 'pkg-config' => :build
   depends_on 'libxmp'
 
   def install
+    if build.head?
+      system "glibtoolize"
+      system "aclocal"
+      system "autoconf"
+      system "automake", "--add-missing"
+    end
+
     system "./configure", "--prefix=#{prefix}"
     system "make install"
 
     # install the included demo song
-    share.install "08_sad_song.it"
+    share.install "ub-name.it" unless build.head?
   end
 
   def test
-    system "#{bin}/xmp", "--load-only", share/"08_sad_song.it"
+    system "#{bin}/xmp", "--load-only", share/"ub-name.it"
   end
 end

@@ -2,8 +2,8 @@ require 'formula'
 
 class IrcdHybrid < Formula
   homepage 'http://www.ircd-hybrid.org/'
-  url 'http://sourceforge.net/projects/ircd-hybrid/files/ircd-hybrid/ircd-hybrid-8.0.6/ircd-hybrid-8.0.6.tgz'
-  sha1 'd43cf4464c69f57f1d8273f70cf885c220385a4b'
+  url 'http://downloads.sourceforge.net/project/ircd-hybrid/ircd-hybrid/ircd-hybrid-8.1.7/ircd-hybrid-8.1.7.tgz'
+  sha1 '8c18839d7cfa289117c49afeac045d282e23441c'
 
   # ircd-hybrid needs the .la files
   skip_clean :la
@@ -17,6 +17,7 @@ class IrcdHybrid < Formula
     system "./configure", "--disable-dependency-tracking",
                           "--prefix=#{prefix}",
                           "--localstatedir=#{var}",
+                          "--sysconfdir=#{etc}",
                           # there's no config setting for this so set it to something generous
                           "--with-nicklen=30"
     system "make install"

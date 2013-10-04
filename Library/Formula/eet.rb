@@ -2,12 +2,12 @@ require 'formula'
 
 class Eet < Formula
   homepage 'http://trac.enlightenment.org/e/wiki/Eet'
-  url 'http://download.enlightenment.org/releases/eet-1.7.5.tar.gz'
-  sha1 'e418110ffdfe1a3ed32b9bc68e4f7bf628d16654'
+  url 'http://download.enlightenment.org/releases/eet-1.7.8.tar.gz'
+  sha1 'd68e17fb155954c7d524cdba98244c09ae511513'
 
-  head 'http://svn.enlightenment.org/svn/e/trunk/eet/'
+  head do
+    url 'http://svn.enlightenment.org/svn/e/trunk/eet/'
 
-  if build.head?
     depends_on :automake
     depends_on :libtool
   end

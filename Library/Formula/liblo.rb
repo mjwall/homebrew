@@ -2,12 +2,12 @@ require 'formula'
 
 class Liblo < Formula
   homepage 'http://liblo.sourceforge.net/'
-  url 'http://downloads.sourceforge.net/project/liblo/liblo/0.26/liblo-0.26.tar.gz'
-  sha1 '21942c8f19e9829b5842cb85352f98c49dfbc823'
+  url 'http://downloads.sourceforge.net/project/liblo/liblo/0.27/liblo-0.27.tar.gz'
+  sha1 'bbd92eb9ab7316ee3f75b6b887b6f853b848c1e5'
 
-  head 'git://liblo.git.sourceforge.net/gitroot/liblo/liblo'
+  head do
+    url 'git://liblo.git.sourceforge.net/gitroot/liblo/liblo'
 
-  if build.head?
     depends_on 'autoconf' => :build
     depends_on 'automake' => :build
     depends_on 'libtool' => :build

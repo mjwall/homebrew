@@ -3,21 +3,11 @@ require 'formula'
 class Emacs23Installed < Requirement
   fatal true
   env :userpaths
+  default_formula 'emacs'
 
   satisfy do
     `emacs --version 2>/dev/null` =~ /^GNU Emacs (\d{2})/
     $1.to_i >= 23
-  end
-
-  def message; <<-EOS.undent
-    Emacs 23 or greater is required to build this software.
-
-    You can install this with Homebrew:
-      brew install emacs
-
-    Or you can use any other Emacs distribution
-    that provides version 23 or greater.
-    EOS
   end
 end
 
@@ -26,7 +16,12 @@ class Mu < Formula
   url 'http://mu0.googlecode.com/files/mu-0.9.9.5.tar.gz'
   sha1 '825e3096e0763a12b8fdf77bd41625ee15ed09eb'
 
-  head 'https://github.com/djcb/mu.git'
+  head do
+    url 'https://github.com/djcb/mu.git'
+
+    depends_on 'automake' => :build
+    depends_on 'libtool' => :build
+  end
 
   option 'with-emacs', 'Build with emacs support'
 
@@ -36,11 +31,6 @@ class Mu < Formula
   depends_on 'gmime'
   depends_on 'xapian'
   depends_on Emacs23Installed if build.with? 'emacs'
-
-  if build.head?
-    depends_on 'automake' => :build
-    depends_on 'libtool' => :build
-  end
 
   env :std if build.with? 'emacs'
 

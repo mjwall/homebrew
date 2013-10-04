@@ -18,15 +18,18 @@ module Homebrew extend self
       end
     end unless ARGV.force?
 
-    if Process.uid.zero? and not File.stat(HOMEBREW_BREW_FILE).uid.zero?
-      raise "Cowardly refusing to `sudo brew install'\n#{SUDO_BAD_ERRMSG}"
+    perform_preinstall_checks
+    ARGV.formulae.each do |f|
+      begin
+        install_formula(f)
+      rescue CannotInstallFormulaError => e
+        ofail e.message
+      end
     end
-
-    install_formulae ARGV.formulae
   end
 
   def check_ppc
-    case Hardware.cpu_type when :ppc, :dunno
+    case Hardware::CPU.type when :ppc, :dunno
       abort <<-EOS.undent
         Sorry, Homebrew does not support your computer's CPU architecture.
         For PPC support, see: https://github.com/mistydemeo/tigerbrew
@@ -42,7 +45,7 @@ module Homebrew extend self
   def check_xcode
     require 'cmd/doctor'
     checks = Checks.new
-    %w{check_for_latest_xcode check_xcode_license_approved}.each do |check|
+    %w{check_xcode_clt check_xcode_license_approved}.each do |check|
       out = checks.send(check)
       opoo out unless out.nil?
     end
@@ -73,16 +76,6 @@ module Homebrew extend self
     check_cellar
   end
 
-  def install_formulae formulae
-    formulae = [formulae].flatten.compact
-    unless formulae.empty?
-      perform_preinstall_checks
-      formulae.each do |f|
-        install_formula(f)
-      end
-    end
-  end
-
   def install_formula f
     fi = FormulaInstaller.new(f)
     fi.install
@@ -93,7 +86,6 @@ module Homebrew extend self
     # another formula. In that case, don't generate an error, just move on.
   rescue FormulaAlreadyInstalledError => e
     opoo e.message
-  rescue CannotInstallFormulaError => e
-    ofail e.message
+  # Ignore CannotInstallFormulaError and let caller handle it.
   end
 end

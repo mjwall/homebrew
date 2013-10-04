@@ -30,7 +30,7 @@ class DependencyCollectorTests < Test::Unit::TestCase
   end
 
   def test_dependency_tags
-    assert Dependency.new('foo', :build).build?
+    assert Dependency.new('foo', [:build]).build?
     assert Dependency.new('foo', [:build, :optional]).optional?
     assert Dependency.new('foo', [:universal]).options.include? '--universal'
     assert_empty Dependency.new('foo').tags
@@ -102,12 +102,61 @@ class DependencyCollectorTests < Test::Unit::TestCase
   end
 
   def test_x11_proxy_dep_mountain_lion
-    MacOS.stubs(:version).returns(MacOS::Version.new(10.8))
+    MacOS.stubs(:version).returns(MacOS::Version.new("10.8"))
     assert_equal Dependency.new("libpng"), @d.build(:libpng)
   end
 
   def test_x11_proxy_dep_lion_or_older
-    MacOS.stubs(:version).returns(MacOS::Version.new(10.7))
+    MacOS.stubs(:version).returns(MacOS::Version.new("10.7"))
     assert_equal X11Dependency::Proxy.new(:libpng), @d.build(:libpng)
+  end
+
+  def test_ld64_dep_pre_leopard
+    MacOS.stubs(:version).returns(MacOS::Version.new("10.4"))
+    assert_equal LD64Dependency.new, @d.build(:ld64)
+  end
+
+  def test_ld64_dep_leopard_or_newer
+    MacOS.stubs(:version).returns(MacOS::Version.new("10.5"))
+    assert_nil @d.build(:ld64)
+  end
+
+  def test_raises_typeerror_for_unknown_classes
+    assert_raises(TypeError) { @d.add(Class.new) }
+  end
+
+  def test_raises_typeerror_for_unknown_types
+    assert_raises(TypeError) { @d.add(Object.new) }
+  end
+
+  def test_does_not_mutate_dependency_spec
+    spec = { 'foo' => :optional }
+    copy = spec.dup
+    @d.add(spec)
+    assert_equal copy, spec
+  end
+
+  def test_resource_dep_git_url
+    resource = Resource.new
+    resource.url("git://github.com/foo/bar.git")
+    assert_instance_of GitDependency, @d.add(resource)
+  end
+
+  def test_resource_dep_gzip_url
+    resource = Resource.new
+    resource.url("http://foo.com/bar.tar.gz")
+    assert_nil @d.add(resource)
+  end
+
+  def test_resource_dep_xz_url
+    resource = Resource.new
+    resource.url("http://foo.com/bar.tar.xz")
+    assert_equal Dependency.new("xz", [:build]), @d.add(resource)
+  end
+
+  def test_resource_dep_raises_for_unknown_classes
+    resource = Resource.new
+    resource.url "foo", :using => Class.new
+    assert_raises(TypeError) { @d.add(resource) }
   end
 end

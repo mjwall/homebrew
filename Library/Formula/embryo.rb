@@ -2,12 +2,12 @@ require 'formula'
 
 class Embryo < Formula
   homepage 'http://trac.enlightenment.org/e/wiki/Embryo'
-  url 'http://download.enlightenment.org/releases/embryo-1.7.5.tar.gz'
-  sha1 'e6d6c5d83a265042dc6f8225720c211b3beb3bcf'
+  url 'http://download.enlightenment.org/releases/embryo-1.7.8.tar.gz'
+  sha1 '879c0dd75de6c402707da4981716a2b7c1dab618'
 
-  head 'http://svn.enlightenment.org/svn/e/trunk/embryo/'
+  head do
+    url 'http://svn.enlightenment.org/svn/e/trunk/embryo/'
 
-  if build.head?
     depends_on :automake
     depends_on :libtool
   end
