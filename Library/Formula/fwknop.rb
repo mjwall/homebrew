@@ -2,19 +2,24 @@ require 'formula'
 
 class Fwknop < Formula
   homepage 'http://www.cipherdyne.org/fwknop/'
-  url 'http://www.cipherdyne.org/fwknop/download/fwknop-2.5.1.tar.bz2'
-  sha1 '65bed25e9d7f4a7ccc3f15cab35b95a6f7b21873'
+  head 'https://github.com/mrash/fwknop.git'
+  url 'https://github.com/mrash/fwknop/archive/2.6.2.tar.gz'
+  sha1 '3e518d3db0831061b027475869c77a7ff304219e'
 
-  # needed for gpg support
-  depends_on 'gpgme' => :optional
+  depends_on "automake" => :build
+  depends_on "autoconf" => :build
+  depends_on "libtool" => :build
+  depends_on "gpgme"
 
   def install
+    system "./autogen.sh"
     system "./configure", "--disable-dependency-tracking",
-                          "--prefix=#{prefix}"
+                          "--prefix=#{prefix}",
+                          "--with-gpgme"
     system "make install"
   end
 
-  def test
+  test do
     system "#{bin}/fwknop", "--version"
   end
 end

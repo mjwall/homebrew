@@ -1,22 +1,30 @@
-require 'formula'
+require "formula"
 
 class Mosquitto < Formula
-  homepage 'http://mosquitto.org/'
-  url 'http://mosquitto.org/files/source/mosquitto-1.2.1.tar.gz'
-  sha1 'c349b2eecd76e8d6eb17d78231955234968e6f69'
+  homepage "http://mosquitto.org/"
+  url "http://mosquitto.org/files/source/mosquitto-1.3.1.tar.gz"
+  sha1 "dcba02c12dffa27a0e76e68f88de21fb5f7de29d"
+  revision 1
 
-  depends_on 'pkg-config' => :build
-  depends_on 'cmake' => :build
+  bottle do
+    sha1 "72a9d7a8fe725804d1d1b802e598c7ce54e1871b" => :mavericks
+    sha1 "1f97f45bb8937ecde69eb5d3cdca065843be86e8" => :mountain_lion
+    sha1 "8f39cbe81f2c7f3a0df82baaf9dcca8ebb1ff238" => :lion
+  end
+
+  depends_on "pkg-config" => :build
+  depends_on "cmake" => :build
+  depends_on "c-ares"
 
   # mosquitto requires OpenSSL >=1.0 for TLS support
-  depends_on 'openssl'
+  depends_on "openssl"
 
   def install
     system "cmake", ".", *std_cmake_args
     system "make install"
 
     # Create the working directory
-    (var/'mosquitto').mkpath
+    (var/"mosquitto").mkpath
   end
 
   test do
@@ -32,8 +40,7 @@ class Mosquitto < Formula
     Python client bindings can be installed from the Python Package Index:
         pip install mosquitto
 
-    Javascript client is available at:
-        http://mosquitto.org/js/
+    Javascript client has been removed, see Eclipse Paho for an alternative.
     EOD
   end
 
@@ -48,7 +55,7 @@ class Mosquitto < Formula
       <string>#{plist_name}</string>
       <key>ProgramArguments</key>
       <array>
-        <string>#{opt_prefix}/sbin/mosquitto</string>
+        <string>#{opt_sbin}/mosquitto</string>
         <string>-c</string>
         <string>#{etc}/mosquitto/mosquitto.conf</string>
       </array>

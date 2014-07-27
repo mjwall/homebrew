@@ -2,8 +2,14 @@ require 'formula'
 
 class Libvirt < Formula
   homepage 'http://www.libvirt.org'
-  url 'http://libvirt.org/sources/libvirt-1.1.3.tar.gz'
-  sha256 'af83e65b4b26520662ddd183c1358be0d05138dba3e66745419f06441eff5a7c'
+  url 'http://libvirt.org/sources/libvirt-1.2.6.tar.gz'
+  sha256 '38a224559a1d04e5d4163c5c1b810df1f29804ebbb1f057d4abcb41a9e5d5dea'
+
+  bottle do
+    sha1 "36e441f7f3ace8c76ceeda6119369883f360e81f" => :mavericks
+    sha1 "7903e6e6ca3e2cc2a53a0f7d6f71def7567420bf" => :mountain_lion
+    sha1 "3edb5df8e75b94e6769ef9068a79bda97e722946" => :lion
+  end
 
   option 'without-libvirtd', 'Build only the virsh client and development libraries'
 
@@ -11,7 +17,6 @@ class Libvirt < Formula
   depends_on 'gnutls'
   depends_on 'libgcrypt'
   depends_on 'yajl'
-  depends_on :python => :recommended
 
   if MacOS.version <= :leopard
     # Definitely needed on Leopard, but not on Snow Leopard.
@@ -39,7 +44,6 @@ class Libvirt < Formula
             "--without-qemu"]
 
     args << "--without-libvirtd" if build.without? 'libvirtd'
-    args << "--without-python" if build.without? 'python'
 
     system "./configure", *args
 
@@ -54,19 +58,11 @@ class Libvirt < Formula
 
     # If the libvirt daemon is built, update its config file to reflect
     # the Homebrew prefix
-    unless build.include? 'without-libvirtd'
+    if build.with? "libvirtd"
       inreplace "#{etc}/libvirt/libvirtd.conf" do |s|
         s.gsub! "/etc/", "#{HOMEBREW_PREFIX}/etc/"
         s.gsub! "/var/", "#{HOMEBREW_PREFIX}/var/"
       end
-    end
-  end
-
-  test do
-    python do
-      # Testing to import the mod because that is a .so file where linking
-      # can break.
-      system python, '-c', "import libvirtmod"
     end
   end
 end

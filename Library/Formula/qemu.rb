@@ -2,13 +2,14 @@ require 'formula'
 
 class Qemu < Formula
   homepage 'http://www.qemu.org/'
-  url 'http://wiki.qemu-project.org/download/qemu-1.6.0.tar.bz2'
-  sha1 '5f754fc128aaafd0c7aee2204d453f4be1ac859e'
+  url 'http://wiki.qemu-project.org/download/qemu-2.0.0.tar.bz2'
+  sha1 'cc24a60a93ba697057a67b6a7224b95627eaf1a6'
+  revision 1
 
   head 'git://git.qemu-project.org/qemu.git'
 
   depends_on 'pkg-config' => :build
-  depends_on :libtool
+  depends_on 'libtool' => :build
   depends_on 'jpeg'
   depends_on 'gnutls'
   depends_on 'glib'
@@ -27,8 +28,9 @@ class Qemu < Formula
     ]
     args << (build.with?('sdl') ? '--enable-sdl' : '--disable-sdl')
     args << (build.with?('vde') ? '--enable-vde' : '--disable-vde')
+    args << '--disable-gtk'
     ENV['LIBTOOL'] = 'glibtool'
     system "./configure", *args
-    system "make install"
+    system "make", "V=1", "install"
   end
 end

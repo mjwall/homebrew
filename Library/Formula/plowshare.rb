@@ -2,14 +2,15 @@ require 'formula'
 
 class Plowshare < Formula
   homepage 'http://code.google.com/p/plowshare/'
-  url 'http://plowshare.googlecode.com/files/plowshare4-snapshot-git20130901.1c5013f.tar.gz'
-  version '4.GIT-1c5013f'
-  sha1 '57f2351d0136ad7a79e99c12be230b144166afaf'
+  url 'https://plowshare.googlecode.com/files/plowshare4-snapshot-git20131130.3c63b19.tar.gz'
+  version '4.GIT-3c63b19'
+  sha1 '806076746394d06f118aef98fbc1c8bbd3585269'
+  revision 1
 
   head 'https://code.google.com/p/plowshare/', :using => :git
 
   depends_on 'recode'
-  depends_on 'imagemagick'
+  depends_on 'imagemagick' => 'with-x11'
   depends_on 'tesseract'
   depends_on 'spidermonkey'
   depends_on 'aview'
@@ -17,9 +18,7 @@ class Plowshare < Formula
   depends_on 'gnu-sed'
   depends_on 'gnu-getopt'
 
-  def patches
-    DATA
-  end
+  patch :DATA
 
   def install
     ENV["PREFIX"] = prefix
@@ -27,11 +26,9 @@ class Plowshare < Formula
   end
 
   def caveats; <<-EOS.undent
-    The default installation of imagemagick does not enable
-    X11 support. plowshare uses the display command which does
-    not work if X11 support is not enabled. To enable:
-      brew remove imagemagick
-      brew install imagemagick --with-x
+    Plowshare 4 requires Bash 4+. OS X ships with an old Bash 3 version.
+    To install Bash 4:
+      brew install bash
     EOS
   end
 end

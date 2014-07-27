@@ -1,55 +1,55 @@
-require 'formula'
+require "formula"
 
 class Mongodb < Formula
-  homepage 'http://www.mongodb.org/'
-  url 'http://downloads.mongodb.org/src/mongodb-src-r2.4.6.tar.gz'
-  sha1 '32066d405f3bed175c9433dc4ac455c2e0091b53'
-
-  devel do
-    url 'http://downloads.mongodb.org/src/mongodb-src-r2.5.2.tar.gz'
-    sha1 'e6b0aa35ea78e6bf9d7791a04810a4db4d69decc'
-  end
-
-  head 'https://github.com/mongodb/mongo.git'
+  homepage "http://www.mongodb.org/"
+  url "http://downloads.mongodb.org/src/mongodb-src-r2.6.3.tar.gz"
+  sha1 "226ab45e3a2e4d4a749271f1bce393ea8358d3dd"
 
   bottle do
-    revision 1
-    sha1 '323566c3738d80a437bae63f294c44e7548ae758' => :mountain_lion
-    sha1 'fbe4d599ae992c6b863c96da6da3b45446bdc0cf' => :lion
-    sha1 'b4d7e33054b9daef2504bcdb8f26ef43dbea6aaf' => :snow_leopard
+    sha1 "d573717ca7c67455680a6823de210c940faf9ac6" => :mavericks
+    sha1 "f7d2a0711e3ac09fd61bcb243360c1a07fb83233" => :mountain_lion
+    sha1 "b646f64abf52bcc594e690ca2c95143685ade864" => :lion
   end
 
-  depends_on 'scons' => :build
-  depends_on 'openssl' => :optional
+  devel do
+    url "http://downloads.mongodb.org/src/mongodb-src-r2.7.3.tar.gz"
+    sha1 "53f832b31b49063a60100bbe1be65015efcd3ccf"
+  end
+
+  head "https://github.com/mongodb/mongo.git"
+
+  option "with-boost", "Compile using installed boost, not the version shipped with mongodb"
+  depends_on "boost" => :optional
+
+  depends_on "scons" => :build
+  depends_on "openssl" => :optional
 
   def install
-    args = ["--prefix=#{prefix}", "-j#{ENV.make_jobs}"]
-    args << '--64' if MacOS.prefer_64_bit?
+    args = %W[
+      --prefix=#{prefix}
+      -j#{ENV.make_jobs}
+      --cc=#{ENV.cc}
+      --cxx=#{ENV.cxx}
+      --osx-version-min=#{MacOS.version}
+    ]
 
-    if build.with? 'openssl'
-      args << '--ssl'
-      args << "--extrapathdyn=#{Formula.factory('openssl').opt_prefix}"
+    # --full installs development headers and client library, not just binaries
+    # (only supported pre-2.7)
+    args << "--full" if build.stable?
+    args << "--use-system-boost" if build.with? "boost"
+    args << "--64" if MacOS.prefer_64_bit?
+
+    if build.with? "openssl"
+      args << "--ssl" << "--extrapath=#{Formula["openssl"].opt_prefix}"
     end
 
-    system 'scons', 'install', *args
+    scons "install", *args
 
-    (prefix+'mongod.conf').write mongodb_conf
+    (buildpath+"mongod.conf").write mongodb_conf
+    etc.install "mongod.conf"
 
-    mv bin/'mongod', prefix
-    (bin/'mongod').write <<-EOS.undent
-      #!/usr/bin/env ruby
-      ARGV << '--config' << '#{etc}/mongod.conf' unless ARGV.find { |arg|
-        arg =~ /^\s*\-\-config$/ or arg =~ /^\s*\-f$/
-      }
-      exec "#{prefix}/mongod", *ARGV
-    EOS
-  end
-
-  def post_install
-    (var+'mongodb').mkpath
-    (var+'log/mongodb').mkpath
-    etc.mkpath
-    cp prefix+'mongod.conf', etc+"mongod.conf" unless File.exists? etc+"mongod.conf"
+    (var+"mongodb").mkpath
+    (var+"log/mongodb").mkpath
   end
 
   def mongodb_conf; <<-EOS.undent
@@ -65,7 +65,7 @@ class Mongodb < Formula
     EOS
   end
 
-  plist_options :manual => "mongod"
+  plist_options :manual => "mongod --config #{HOMEBREW_PREFIX}/etc/mongod.conf"
 
   def plist; <<-EOS.undent
     <?xml version="1.0" encoding="UTF-8"?>
@@ -76,8 +76,7 @@ class Mongodb < Formula
       <string>#{plist_name}</string>
       <key>ProgramArguments</key>
       <array>
-        <string>#{opt_prefix}/mongod</string>
-        <string>run</string>
+        <string>#{opt_bin}/mongod</string>
         <string>--config</string>
         <string>#{etc}/mongod.conf</string>
       </array>
@@ -104,5 +103,9 @@ class Mongodb < Formula
     </dict>
     </plist>
     EOS
+  end
+
+  test do
+    system "#{bin}/mongod", "--sysinfo"
   end
 end

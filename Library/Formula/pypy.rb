@@ -2,23 +2,28 @@ require 'formula'
 
 class Pypy < Formula
   homepage 'http://pypy.org/'
-  url 'https://bitbucket.org/pypy/pypy/downloads/pypy-2.1-osx64.tar.bz2'
-  version '2.1.0'
-  sha1 '6cdaa1dc0a47d9eb6d816f7d394ca46f290a1ed5'
+  url 'https://bitbucket.org/pypy/pypy/downloads/pypy-2.3.1-osx64.tar.bz2'
+  version '2.3.1'
+  sha1 '4d9cdf801e4c8fb432b17be0edf76eb3d9360f40'
 
   depends_on :arch => :x86_64
 
   resource 'setuptools' do
-    url 'https://pypi.python.org/packages/source/s/setuptools/setuptools-1.1.6.tar.gz'
-    sha1 '4a8863e8196704759a5800afbcf33a94b802ac88'
+    url 'https://pypi.python.org/packages/source/s/setuptools/setuptools-5.2.tar.gz'
+    sha1 '749f1ea153426866d6117d00256cf37c90b1b4f5'
   end
 
   resource 'pip' do
-    url 'https://pypi.python.org/packages/source/p/pip/pip-1.4.1.tar.gz'
-    sha1 '9766254c7909af6d04739b4a7732cc29e9a48cb0'
+    url 'https://pypi.python.org/packages/source/p/pip/pip-1.5.6.tar.gz'
+    sha1 'e6cd9e6f2fd8d28c9976313632ef8aa8ac31249e'
   end
 
   def install
+    # Having PYTHONPATH set can cause the build to fail if another
+    # Python is present, e.g. a Homebrew-provided Python 2.x
+    # See https://github.com/Homebrew/homebrew/issues/24364
+    ENV['PYTHONPATH'] = ''
+
     rmtree 'site-packages'
 
     # The PyPy binary install instructions suggest installing somewhere
@@ -26,6 +31,7 @@ class Pypy < Formula
     # we want to avoid putting PyPy's Python.h somewhere that configure
     # scripts will find it.
     libexec.install Dir['*']
+    bin.install_symlink libexec/"bin/pypy"
 
     # Post-install, fix up the site-packages and install-scripts folders
     # so that user-installed Python software survives minor updates, such
@@ -35,7 +41,7 @@ class Pypy < Formula
     prefix_site_packages.mkpath
 
     # Symlink the prefix site-packages into the cellar.
-    ln_s prefix_site_packages, libexec+'site-packages'
+    libexec.install_symlink prefix_site_packages
 
     # Tell distutils-based installers where to put scripts
     scripts_folder.mkpath
@@ -51,15 +57,9 @@ class Pypy < Formula
     resource('setuptools').stage { system "#{libexec}/bin/pypy", "setup.py", "install" }
     resource('pip').stage { system "#{libexec}/bin/pypy", "setup.py", "install" }
 
-    # Symlink to easy_install_pypy.
-    unless (scripts_folder+'easy_install_pypy').exist?
-      ln_s "#{scripts_folder}/easy_install", "#{scripts_folder}/easy_install_pypy"
-    end
-
-    # Symlink to pip_pypy.
-    unless (scripts_folder+'pip_pypy').exist?
-      ln_s "#{scripts_folder}/pip", "#{scripts_folder}/pip_pypy"
-    end
+    # Symlinks to easy_install_pypy and pip_pypy
+    bin.install_symlink scripts_folder/'easy_install' => "easy_install_pypy"
+    bin.install_symlink scripts_folder/'pip' => "pip_pypy"
   end
 
   def caveats; <<-EOS.undent
@@ -78,7 +78,7 @@ class Pypy < Formula
         #{scripts_folder}/easy_install pip
         #{scripts_folder}/pip install --upgrade setuptools
 
-    See: https://github.com/mxcl/homebrew/wiki/Homebrew-and-Python
+    See: https://github.com/Homebrew/homebrew/wiki/Homebrew-and-Python
     EOS
   end
 

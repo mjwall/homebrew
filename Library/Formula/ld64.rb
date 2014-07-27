@@ -1,5 +1,18 @@
 require 'formula'
 
+class SnowLeopardOrOlder < Requirement
+  fatal true
+  def satisfied?
+    MacOS.version <= :snow_leopard
+  end
+
+  def message; <<-EOS.undent
+    This version of ld64 will only build on 10.6 and older.
+    It is provided for older versions of OS X.
+    EOS
+  end
+end
+
 class Ld64 < Formula
   homepage 'http://opensource.apple.com/'
   # Latest is 134.9, but it no longer supports building for PPC.
@@ -9,6 +22,8 @@ class Ld64 < Formula
   #
   url 'http://opensource.apple.com/tarballs/ld64/ld64-97.17.tar.gz'
   sha1 '7c1d816c2fec02e558f4a528d16d8161f0e379b5'
+
+  depends_on SnowLeopardOrOlder
 
   # Tiger either includes old versions of these headers,
   # or doesn't ship them at all
@@ -23,17 +38,22 @@ class Ld64 < Formula
     build 5370
   end
 
-  def patches
-    {
-      :p0 => [
-        # Fixes logic on PPC branch islands
-        "https://trac.macports.org/export/103948/trunk/dports/devel/ld64/files/ld64-97-ppc-branch-island.patch",
-        # Remove LTO support
-        "https://trac.macports.org/export/103949/trunk/dports/devel/ld64/files/ld64-97-no-LTO.patch",
-        # Fix version number
-        "https://trac.macports.org/export/103951/trunk/dports/devel/ld64/files/ld64-version.patch"
-      ]
-    }
+  # Fixes logic on PPC branch islands
+  patch :p0 do
+    url "https://trac.macports.org/export/103948/trunk/dports/devel/ld64/files/ld64-97-ppc-branch-island.patch"
+    sha1 "e3f42a52e201a40272ca29119bced50a270659b8"
+  end
+
+  # Remove LTO support
+  patch :p0 do
+    url "https://trac.macports.org/export/103949/trunk/dports/devel/ld64/files/ld64-97-no-LTO.patch"
+    sha1 "3a6f482f87c08ac6135b7a36fdb131d82daf9ea1"
+  end
+
+  # Fix version number
+  patch :p0 do
+    url "https://trac.macports.org/export/103951/trunk/dports/devel/ld64/files/ld64-version.patch"
+    sha1 "42a15f2bd7de9b01d24dba8744cd4a36a2dec87b"
   end
 
   def install

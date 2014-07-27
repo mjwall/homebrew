@@ -1,18 +1,18 @@
 require 'formula'
 
 class Sonar < Formula
-  homepage 'http://www.sonarsource.org'
-  url 'http://dist.sonar.codehaus.org/sonar-3.7.zip'
-  sha1 '60d49ffe55d3f1e8ab7cfa012ac72ce554a9b259'
+  homepage 'http://www.sonarqube.org/'
+  url 'http://dist.sonar.codehaus.org/sonarqube-4.3.1.zip'
+  sha1 '925dedd952440a04903727fc995663497eb7c0d0'
 
   def install
     # Delete native bin directories for other systems
     rm_rf Dir['bin/{aix,hpux,linux,solaris,windows}-*']
 
     if MacOS.prefer_64_bit?
-      rm_rf Dir['bin/macosx-universal-32']
+      rm_rf "bin/macosx-universal-32"
     else
-      rm_rf Dir['bin/macosx-universal-64']
+      rm_rf "bin/macosx-universal-64"
     end
 
     # Delete Windows files
@@ -37,7 +37,7 @@ class Sonar < Formula
         <string>#{plist_name}</string>
         <key>ProgramArguments</key>
         <array>
-        <string>#{opt_prefix}/bin/sonar</string>
+        <string>#{opt_bin}/sonar</string>
         <string>start</string>
         </array>
         <key>RunAtLoad</key>

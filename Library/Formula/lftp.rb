@@ -1,25 +1,24 @@
-require 'formula'
+require "formula"
 
 class Lftp < Formula
-  homepage 'http://lftp.yar.ru/'
-  url 'http://lftp.yar.ru/ftp/lftp-4.4.9.tar.bz2'
-  mirror 'ftp://ftp.cs.tu-berlin.de/pub/net/ftp/lftp/lftp-4.4.9.tar.bz2'
-  sha1 'f7035e0c558222654511f17db3213262bc4b53fd'
+  homepage "http://lftp.yar.ru/"
+  url "http://lftp.yar.ru/ftp/lftp-4.5.3.tar.gz"
+  sha1 "7c70d2b428c071fc19dd340bcd5bf04069b5fad0"
 
-  # https://github.com/mxcl/homebrew/issues/18749
-  env :std
+  bottle do
+    sha1 "e77c6a4db177a1d57d4d64a26c0695f04458ce70" => :mavericks
+    sha1 "fae24a8f755a8a35a41059b78da9c12567659b61" => :mountain_lion
+    sha1 "9d9f72624246af050ef7131697d21874f487a8a7" => :lion
+  end
 
-  depends_on 'pkg-config' => :build
-  depends_on 'readline'
-  depends_on 'gnutls'
+  depends_on "pkg-config" => :build
+  depends_on "readline"
+  depends_on "openssl"
 
   def install
-    # Bus error
-    # TODO what are the more specific circumstances?
-    ENV.no_optimization if MacOS.version <= :leopard
-
     system "./configure", "--disable-dependency-tracking",
-                          "--prefix=#{prefix}"
-    system "make install"
+                          "--prefix=#{prefix}",
+                          "--with-openssl=#{Formula["openssl"].opt_prefix}"
+    system "make", "install"
   end
 end

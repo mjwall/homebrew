@@ -1,37 +1,41 @@
 require 'formula'
 
 class Git < Formula
-  homepage 'http://git-scm.com'
-  url 'http://git-core.googlecode.com/files/git-1.8.4.tar.gz'
-  sha1 '2a361a2d185b8bc604f7f2ce2f502d0dea9d3279'
-  head 'https://github.com/git/git.git'
+  homepage "http://git-scm.com"
+  url "https://www.kernel.org/pub/software/scm/git/git-2.0.3.tar.gz"
+  sha1 "e580c17045157ccced5c49a6f26aa298a291a89d"
+
+  head "https://github.com/git/git.git", :shallow => false
 
   bottle do
-    sha1 'c752e68f6c39a567adfa43eea9f6b74caaf35bcf' => :mountain_lion
-    sha1 'ca4b4ce0455636400ad70e413c179fe4e3329288' => :lion
-    sha1 'c5a3559d59c7d9cd608559771ece10743a340c32' => :snow_leopard
+    sha1 "2f5b00fb91984d59ad02bd47c5bd73467bfeea9b" => :mavericks
+    sha1 "d79154bbbd6181e6eb086c1071a5427cbdf6373b" => :mountain_lion
+    sha1 "6a34da7fcc80d804eef457d75b84c9f222f1dbd2" => :lion
+  end
+
+  resource "man" do
+    url "https://www.kernel.org/pub/software/scm/git/git-manpages-2.0.3.tar.gz"
+    sha1 "e7ab2fbcb98a3a58cb96a900b9283574f968e6c7"
+  end
+
+  resource "html" do
+    url "https://www.kernel.org/pub/software/scm/git/git-htmldocs-2.0.3.tar.gz"
+    sha1 "736740e95a72a070ae1edf3644665914ced1495c"
   end
 
   option 'with-blk-sha1', 'Compile with the block-optimized SHA1 implementation'
   option 'without-completions', 'Disable bash/zsh completions from "contrib" directory'
   option 'with-brewed-openssl', "Build with Homebrew OpenSSL instead of the system version"
   option 'with-brewed-curl', "Use Homebrew's version of cURL library"
+  option 'with-brewed-svn', "Use Homebrew's version of SVN"
+  option 'with-persistent-https', 'Build git-remote-persistent-https from "contrib" directory'
 
-  depends_on :python
   depends_on 'pcre' => :optional
   depends_on 'gettext' => :optional
   depends_on 'openssl' if build.with? 'brewed-openssl'
-  depends_on 'curl' => 'with-darwinssl' if build.with? 'brewed-curl'
-
-  resource 'man' do
-    url 'http://git-core.googlecode.com/files/git-manpages-1.8.4.tar.gz'
-    sha1 '8c67a7bc442d6191bc17633c7f2846c71bda71cf'
-  end
-
-  resource 'html' do
-    url 'http://git-core.googlecode.com/files/git-htmldocs-1.8.4.tar.gz'
-    sha1 'f130398eb623c913497ef51a6e61d916fe7e31c8'
-  end
+  depends_on 'curl' if build.with? 'brewed-curl'
+  depends_on 'go' => :build if build.with? 'persistent-https'
+  depends_on 'subversion' => 'perl' if build.with? 'brewed-svn'
 
   def install
     # If these things are installed, tell Git build system to not use them
@@ -39,8 +43,20 @@ class Git < Formula
     ENV['NO_DARWIN_PORTS'] = '1'
     ENV['V'] = '1' # build verbosely
     ENV['NO_R_TO_GCC_LINKER'] = '1' # pass arguments to LD correctly
-    ENV['PYTHON_PATH'] = python.binary if python
+    ENV['PYTHON_PATH'] = which 'python'
     ENV['PERL_PATH'] = which 'perl'
+
+    if build.with? 'brewed-svn'
+      ENV["PERLLIB_EXTRA"] = "#{Formula["subversion"].prefix}/Library/Perl/5.16/darwin-thread-multi-2level"
+    elsif MacOS.version >= :mavericks
+      ENV["PERLLIB_EXTRA"] = %W{
+        #{MacOS.active_developer_dir}
+        /Library/Developer/CommandLineTools
+        /Applications/Xcode.app/Contents/Developer
+      }.uniq.map { |p|
+        "#{p}/Library/Perl/5.16/darwin-thread-multi-2level"
+      }.join(":")
+    end
 
     unless quiet_system ENV['PERL_PATH'], '-e', 'use ExtUtils::MakeMaker'
       ENV['NO_PERL_MAKEMAKER'] = '1'
@@ -50,10 +66,12 @@ class Git < Formula
 
     if build.with? 'pcre'
       ENV['USE_LIBPCRE'] = '1'
-      ENV['LIBPCREDIR'] = Formula.factory('pcre').opt_prefix
+      ENV['LIBPCREDIR'] = Formula['pcre'].opt_prefix
     end
 
-    ENV['NO_GETTEXT'] = '1' unless build.with? 'gettext'
+    ENV['NO_GETTEXT'] = '1' if build.without? 'gettext'
+
+    ENV['GIT_DIR'] = cached_download/".git" if build.head?
 
     system "make", "prefix=#{prefix}",
                    "sysconfdir=#{etc}",
@@ -61,6 +79,8 @@ class Git < Formula
                    "CFLAGS=#{ENV.cflags}",
                    "LDFLAGS=#{ENV.ldflags}",
                    "install"
+
+    bin.install Dir["contrib/remote-helpers/git-remote-{hg,bzr}"]
 
     # Install the OS X keychain credential helper
     cd 'contrib/credential/osxkeychain' do
@@ -79,7 +99,16 @@ class Git < Formula
       bin.install 'git-subtree'
     end
 
-    unless build.without? 'completions'
+    if build.with? 'persistent-https'
+      cd 'contrib/persistent-https' do
+        system "make"
+        bin.install 'git-remote-persistent-http',
+                    'git-remote-persistent-https',
+                    'git-remote-persistent-https--proxy'
+      end
+    end
+
+    if build.with? 'completions'
       # install the completion script first because it is inside 'contrib'
       bash_completion.install 'contrib/completion/git-completion.bash'
       bash_completion.install 'contrib/completion/git-prompt.sh'
@@ -94,6 +123,10 @@ class Git < Formula
     # on many other packages, and is somewhat crazy, this way is easier.
     man.install resource('man')
     (share+'doc/git-doc').install resource('html')
+
+    # Make html docs world-readable
+    chmod 0644, Dir["#{share}/doc/git-doc/**/*.{html,txt}"]
+    chmod 0755, Dir["#{share}/doc/git-doc/{RelNotes,howto,technical}"]
   end
 
   def caveats; <<-EOS.undent

@@ -2,8 +2,8 @@ require 'formula'
 
 class Imapfilter < Formula
   homepage 'https://github.com/lefcha/imapfilter/'
-  url 'https://github.com/lefcha/imapfilter/archive/v2.5.5.tar.gz'
-  sha1 '94853df9b0e779b8695a4b4a21d1d0d783ad4324'
+  url 'https://github.com/lefcha/imapfilter/archive/v2.5.6.tar.gz'
+  sha1 '49ac7b7fb937b40eb42a162314de4f8866e33c11'
 
   depends_on 'lua'
   depends_on 'pcre'
@@ -30,7 +30,7 @@ class Imapfilter < Formula
     EOS
   end
 
-  def test
+  test do
     system "#{bin}/imapfilter", "-V"
   end
 end

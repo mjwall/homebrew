@@ -1,6 +1,6 @@
 require 'formula'
 
-module Homebrew extend self
+module Homebrew
   def options
     if ARGV.include? '--all'
       puts_options Formula.to_a
@@ -29,6 +29,14 @@ module Homebrew extend self
     f.build.sort_by(&:flag).each do |opt|
       puts opt.flag
       puts "\t"+opt.description
+    end
+    if f.devel
+      puts '--devel'
+      puts "\tinstall development version #{f.devel.version}"
+    end
+    if f.head
+      puts '--HEAD'
+      puts "\tinstall HEAD version"
     end
   end
 end
