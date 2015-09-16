@@ -1,48 +1,33 @@
-require 'formula'
-
 class Socat < Formula
-  homepage 'http://www.dest-unreach.org/socat/'
-  url 'http://www.dest-unreach.org/socat/download/socat-1.7.2.4.tar.bz2'
-  mirror 'http://ftp.de.debian.org/debian/pool/main/s/socat/socat_1.7.2.4.orig.tar.bz2'
-  sha1 '55650f3c4c1a5cdc323b2e6eece416b6303d39b5'
+  desc "netcat on steroids"
+  homepage "http://www.dest-unreach.org/socat/"
+  url "http://www.dest-unreach.org/socat/download/socat-1.7.3.0.tar.gz"
+  sha256 "f8de4a2aaadb406a2e475d18cf3b9f29e322d4e5803d8106716a01fd4e64b186"
 
   bottle do
     cellar :any
-    sha1 "2adcb868d02085a1750ae6d2cb737a133f46e758" => :mavericks
-    sha1 "7fbdafbdd205731de188c08f501816cf835ea9c8" => :mountain_lion
-    sha1 "57e25b005e2f3261861400adf34869460daf828d" => :lion
+    revision 1
+    sha256 "a989fcc760a1e05a53b4193ec49d16d84072b29311366b2f5c38af4490338fef" => :yosemite
+    sha256 "dc80a1cfabde2f6abdf4a898bd92d4f8ff9a90a0464e61f5862bde0cb2f1ffe3" => :mavericks
+    sha256 "1956257e901dbb67a3286950059c7edca5cb08e435fa87b038cc3ef306def1ea" => :mountain_lion
   end
 
   devel do
-    url 'http://www.dest-unreach.org/socat/download/socat-2.0.0-b7.tar.gz'
-    mirror 'http://fossies.org/linux/privat/socat-2.0.0-b7.tar.gz'
-    sha1 'b9ce176ab1ad974a0f01810b517d404214f40288'
-    patch :DATA
+    url "http://www.dest-unreach.org/socat/download/socat-2.0.0-b8.tar.bz2"
+    sha256 "c804579db998fb697431c82829ae03e6a50f342bd41b8810332a5d0661d893ea"
+    version "2.0.0-b8"
   end
 
-  depends_on 'readline'
-  depends_on 'openssl'
+  depends_on "readline"
+  depends_on "openssl"
 
   def install
     ENV.enable_warnings # -w causes build to fail
     system "./configure", "--prefix=#{prefix}", "--mandir=#{man}"
-    system "make install"
+    system "make", "install"
+  end
+
+  test do
+    assert_match "HTTP/1.0", pipe_output("#{bin}/socat - tcp:www.google.com:80", "GET / HTTP/1.0\r\n\r\n")
   end
 end
-
-__END__
-diff --git a/sysincludes.h b/sysincludes.h
-index ee25556..8a57422 100644
---- a/sysincludes.h
-+++ b/sysincludes.h
-@@ -5,6 +5,10 @@
- #ifndef __sysincludes_h_included
- #define __sysincludes_h_included 1
- 
-+#if __APPLE__
-+#define __APPLE_USE_RFC_3542 1
-+#endif
-+
- #if HAVE_LIMITS_H
- #include <limits.h>	/* USHRT_MAX */
- #endif

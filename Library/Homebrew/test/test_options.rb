@@ -1,5 +1,5 @@
-require 'testing_env'
-require 'options'
+require "testing_env"
+require "options"
 
 class OptionTests < Homebrew::TestCase
   def setup
@@ -8,10 +8,6 @@ class OptionTests < Homebrew::TestCase
 
   def test_to_s
     assert_equal "--foo", @option.to_s
-  end
-
-  def test_to_str
-    assert_equal "--foo", @option.to_str
   end
 
   def test_equality
@@ -23,21 +19,38 @@ class OptionTests < Homebrew::TestCase
     refute_eql @option, bar
   end
 
-  def test_strips_leading_dashes
-    option = Option.new("--foo")
-    assert_equal "foo", option.name
-    assert_equal "--foo", option.flag
-  end
-
   def test_description
     assert_empty @option.description
     assert_equal "foo", Option.new("foo", "foo").description
   end
 
-  def test_preserves_short_options
-    option = Option.new("-d")
-    assert_equal "-d", option.flag
-    assert_equal "d", option.name
+  def test_inspect
+    assert_equal "#<Option: \"--foo\">", @option.inspect
+  end
+end
+
+class DeprecatedOptionTests < Homebrew::TestCase
+  def setup
+    @deprecated_option = DeprecatedOption.new("foo", "bar")
+  end
+
+  def test_old
+    assert_equal "foo", @deprecated_option.old
+    assert_equal "--foo", @deprecated_option.old_flag
+  end
+
+  def test_current
+    assert_equal "bar", @deprecated_option.current
+    assert_equal "--bar", @deprecated_option.current_flag
+  end
+
+  def test_equality
+    foobar = DeprecatedOption.new("foo", "bar")
+    boofar = DeprecatedOption.new("boo", "far")
+    assert_equal foobar, @deprecated_option
+    refute_equal boofar, @deprecated_option
+    assert_eql @deprecated_option, foobar
+    refute_eql @deprecated_option, boofar
   end
 end
 
@@ -70,20 +83,20 @@ class OptionsTests < Homebrew::TestCase
   end
 
   def test_union_returns_options
-    assert_instance_of Options, (@options + Options.new)
+    assert_instance_of Options, @options + Options.new
   end
 
   def test_difference_returns_options
-    assert_instance_of Options, (@options - Options.new)
+    assert_instance_of Options, @options - Options.new
   end
 
   def test_shovel_returns_self
-    assert_same @options, (@options << Option.new("foo"))
+    assert_same @options, @options << Option.new("foo")
   end
 
   def test_as_flags
     @options << Option.new("foo")
-    assert_equal %w{--foo}, @options.as_flags
+    assert_equal %w[--foo], @options.as_flags
   end
 
   def test_to_a
@@ -98,70 +111,35 @@ class OptionsTests < Homebrew::TestCase
     assert_equal [option], @options.to_ary
   end
 
-  def test_concat_array
-    option = Option.new("foo")
-    @options.concat([option])
-    assert_includes @options, option
-    assert_equal [option], @options.to_a
-  end
-
-  def test_concat_options
-    option = Option.new("foo")
-    opts = Options.new
-    opts << option
-    @options.concat(opts)
-    assert_includes @options, option
-    assert_equal [option], @options.to_a
-  end
-
-  def test_concat_returns_self
-    assert_same @options, (@options.concat([]))
-  end
-
   def test_intersection
-    foo, bar, baz = %w{foo bar baz}.map { |o| Option.new(o) }
+    foo, bar, baz = %w[foo bar baz].map { |o| Option.new(o) }
     options = Options.new << foo << bar
     @options << foo << baz
     assert_equal [foo], (@options & options).to_a
   end
 
   def test_set_union
-    foo, bar, baz = %w{foo bar baz}.map { |o| Option.new(o) }
+    foo, bar, baz = %w[foo bar baz].map { |o| Option.new(o) }
     options = Options.new << foo << bar
     @options << foo << baz
-    assert_equal [foo, bar, baz].sort, (@options | options).to_a.sort
+    assert_equal [foo, bar, baz].sort, (@options | options).sort
   end
 
-  def test_coerce_with_options
-    assert_same @options, Options.coerce(@options)
+  def test_times
+    @options << Option.new("aa") << Option.new("bb") << Option.new("cc")
+    assert_equal %w[--aa --bb --cc], (@options * "XX").split("XX").sort
   end
 
-  def test_coerce_with_option
-    option = Option.new("foo")
-    assert_equal option, Options.coerce(option).to_a.first
-  end
-
-  def test_coerce_with_array
-    array = %w{--foo --bar}
+  def test_create_with_array
+    array = %w[--foo --bar]
     option1 = Option.new("foo")
     option2 = Option.new("bar")
-    assert_equal [option1, option2].sort, Options.coerce(array).to_a.sort
+    assert_equal [option1, option2].sort, Options.create(array).sort
   end
 
-  def test_coerce_raises_for_inappropriate_types
-    assert_raises(TypeError) { Options.coerce(1) }
-  end
-
-  def test_coerce_splits_multiple_switches_with_single_dash
-    array = %w{-vd}
-    verbose = Option.new("-v")
-    debug = Option.new("-d")
-    assert_equal [verbose, debug].sort, Options.coerce(array).to_a.sort
-  end
-
-  def test_copies_do_not_share_underlying_collection
-    copy = @options.dup << Option.new("foo")
-    assert_empty @options
-    assert_equal 1, copy.count
+  def test_inspect
+    assert_equal "#<Options: []>", @options.inspect
+    @options << Option.new("foo")
+    assert_equal "#<Options: [#<Option: \"--foo\">]>", @options.inspect
   end
 end

@@ -1,15 +1,15 @@
-require "formula"
-
 class Fleetctl < Formula
+  desc "Distributed init system"
   homepage "https://github.com/coreos/fleet"
-  url "https://github.com/coreos/fleet/archive/v0.5.4.tar.gz"
-  sha1 "1fec5e4d23627446bce52eae691cb233ef03e17b"
+  url "https://github.com/coreos/fleet/archive/v0.11.5.tar.gz"
+  sha256 "a6a785099df71645b5fe8755a36baa6c11138749bc02ae4990fd3f52663c0394"
   head "https://github.com/coreos/fleet.git"
 
   bottle do
-    sha1 "80417f9cb656b30100f5fb06bb4d4067a6cd3d93" => :mavericks
-    sha1 "a8cb08ce6ed71d44bbede0eb50260e14851d6ae2" => :mountain_lion
-    sha1 "a62e570c01a879c361b36a7b6b91db6fc052e9b2" => :lion
+    cellar :any
+    sha256 "66d1adc5c8b70ea5e28b0f7bd7a73f0baeb557198e90cc3a0bb87733524d5350" => :yosemite
+    sha256 "b444e18c6ad84389b3c7056ed190b22cf3427d77bc77323e30615d5794649e6e" => :mavericks
+    sha256 "0c48461c277d601a0abff0ff43110618316abd5bcbd498538a791ad91b5ce71d" => :mountain_lion
   end
 
   depends_on "go" => :build
@@ -18,5 +18,9 @@ class Fleetctl < Formula
     ENV["GOPATH"] = buildpath
     system "./build"
     bin.install "bin/fleetctl"
+  end
+
+  test do
+    system "#{bin}/fleetctl", "-version"
   end
 end

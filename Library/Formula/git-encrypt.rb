@@ -1,13 +1,12 @@
-require 'formula'
-
 class GitEncrypt < Formula
-  homepage 'https://github.com/shadowhand/git-encrypt'
-  url 'https://github.com/shadowhand/git-encrypt/archive/0.3.1.tar.gz'
-  sha1 '2a9a0bff06c0ac1a95961cbf61c3efa1c926a294'
+  desc "Transparent git encryption"
+  homepage "https://github.com/shadowhand/git-encrypt"
+  url "https://github.com/shadowhand/git-encrypt/archive/0.3.2.tar.gz"
+  sha256 "a28ae0e023ae9c6629a12fde2a59710551956ab363b25d822b4e65351c066b83"
 
-  head 'https://github.com/shadowhand/git-encrypt.git', :branch => 'master'
+  head "https://github.com/shadowhand/git-encrypt.git"
 
   def install
-    bin.install 'gitcrypt'
+    bin.install "gitcrypt"
   end
 end

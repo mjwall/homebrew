@@ -1,24 +1,17 @@
-require "formula"
-
 class Geoip < Formula
+  desc "GeoIP databases in a number of formats"
   homepage "https://github.com/maxmind/geoip-api-c"
-
-  stable do
-    url "https://github.com/maxmind/geoip-api-c/archive/v1.6.2.tar.gz"
-    sha1 "aa9a91b61667b605f62964c613e15400cbca2cae"
-
-    # Download test data so `make check` works. Fixed in HEAD.
-    # See https://github.com/maxmind/geoip-api-c/commit/722707cc3a0adc06aec3e98bc36e7262f67ec0da
-    patch :DATA
-  end
+  url "https://github.com/maxmind/geoip-api-c/archive/v1.6.6.tar.gz"
+  sha256 "db8ed5d07292c75cb3018738e6411037f15cc2a517f38ee04c1232cbe3d30b46"
 
   head "https://github.com/maxmind/geoip-api-c.git"
 
   bottle do
     cellar :any
-    sha1 "2a60e65d979e66b54a12534f8c11f7f4d8c81033" => :mavericks
-    sha1 "0c658d03041b1b3e7eb4c0196fb692020f0615b2" => :mountain_lion
-    sha1 "d35b588961572032297c353fa6e549e4b0086740" => :lion
+    sha256 "d5d86bfe8fd5956592fa475d4c8f56c56fa9c4f0e3a0d9972bce7ef1bcdaaa86" => :el_capitan
+    sha256 "8394441f236c3f35fb436da2a52798aaac637818213883f074d2f976e296e11d" => :yosemite
+    sha256 "ccc2707ef9e8b24747ad772cfa1949781f8e4063a90a692ad4317a699ae84526" => :mavericks
+    sha256 "ad4d958f99890a460f9d8c32e7ed589d91651ce6537eed620832840c36dc699c" => :mountain_lion
   end
 
   depends_on "autoconf" => :build
@@ -54,11 +47,10 @@ class Geoip < Formula
     legacy_data = Pathname.new "#{HOMEBREW_PREFIX}/share/GeoIP"
     cp Dir["#{legacy_data}/*"], geoip_data if legacy_data.exist?
 
-    ["City", "Country"].each do |type|
-      full = Pathname.new "#{geoip_data}/GeoIP#{type}.dat"
-      next if full.exist? or full.symlink?
-      ln_s "GeoLite#{type}.dat", full
-    end
+    full = Pathname.new "#{geoip_data}/GeoIP.dat"
+    ln_s "GeoLiteCountry.dat", full unless full.exist? || full.symlink?
+    full = Pathname.new "#{geoip_data}/GeoIPCity.dat"
+    ln_s "GeoLiteCity.dat", full unless full.exist? || full.symlink?
   end
 
   test do
@@ -67,24 +59,3 @@ class Geoip < Formula
     system "#{bin}/geoiplookup", "-f", "GeoIP.dat", "8.8.8.8"
   end
 end
-
-__END__
-diff --git a/bootstrap b/bootstrap
-index 30fc0f9..f20f095 100755
---- a/bootstrap
-+++ b/bootstrap
-@@ -1,5 +1,14 @@
- #!/bin/sh
-
-+# dl the dat file if needed
-+DIR="$( cd "$( dirname "$0"  )" && pwd  )"
-+
-+# download geolite database for the tests
-+mkdir -p $DIR/data
-+if [ ! -f $DIR/data/GeoIP.dat  ]; then
-+      curl http://geolite.maxmind.com/download/geoip/database/GeoLiteCountry/GeoIP.dat.gz | gzip -d > $DIR/data/GeoIP.dat
-+fi
-+
- # make sure  to use the installed libtool
- rm -f ltmain.sh
- autoreconf -fiv

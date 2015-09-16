@@ -1,9 +1,8 @@
-require "formula"
-
 class PerlBuild < Formula
+  desc "Perl builder"
   homepage "https://github.com/tokuhirom/Perl-Build"
-  url "https://github.com/tokuhirom/Perl-Build/archive/1.08.tar.gz"
-  sha1 "98842888f8106cabf5806bddf48c0d1567a12b05"
+  url "https://github.com/tokuhirom/Perl-Build/archive/1.10.tar.gz"
+  sha256 "f005a730ee32b5dfc79af662f0862b31f078606ae3e78986b4be359a1e5e2bb9"
 
   head "https://github.com/tokuhirom/perl-build.git"
 

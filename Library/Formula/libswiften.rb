@@ -1,31 +1,42 @@
-require 'formula'
-
 class Libswiften < Formula
-  homepage 'http://swift.im/swiften'
+  desc "C++ library for implementing XMPP applications"
+  homepage "https://swift.im/swiften"
+  revision 1
 
   stable do
-    url "http://swift.im/downloads/releases/swift-2.0/swift-2.0.tar.gz"
-    sha1 "b04ba098fffb1edc2ef0215957371c249458f0be"
+    url "https://swift.im/downloads/releases/swift-2.0/swift-2.0.tar.gz"
+    sha256 "cbcdbe527dc4d112a38f3cdec5f1051d3beba0b97f8082f90debd04a5b45a41f"
 
     # Patch to include lock from boost. Taken from
     # http://comments.gmane.org/gmane.linux.redhat.fedora.extras.cvs/957411
     patch :DATA
+
+    # boost 1.56 compatibility
+    # backported from upstream HEAD at
+    # https://swift.im/git/swift/commit/?id=381b22fc365c27b9cd585f4b78f53ebc698d9f54 and
+    # https://swift.im/git/swift/commit/?id=dc48cc3f34e3e229172202717520e77233c37ed7
+    patch do
+      url "https://gist.githubusercontent.com/tdsmith/278e6bdaa5502bc5a5f3/raw/0ca7358786751e1e6b5298f3831c407bdfb4b509/libswiften-boost-156.diff"
+      sha256 "70f0263d9cd1d8be87c2a034c5b9046f74f20c7bf38e6ac7a1d09f87acc42436"
+    end
   end
 
   bottle do
-    sha1 "8585e20ca6baafeb2ab4f5bc5c5f50de1fff9073" => :mavericks
-    sha1 "17939bb1820f63ce154baa4d8a4311ba28688d82" => :mountain_lion
-    sha1 "1f959d914263407c4a909d92e3cd6047ca280280" => :lion
+    revision 3
+    sha256 "b9c79e101fa96c7e53b505ee7afaa511ab3f81735d2440b6b810a85ec4b36614" => :yosemite
+    sha256 "1d69b8e63b9e41280d24c23d3f611e03c5798bb165abeed4bc0bf06acbf027a5" => :mavericks
+    sha256 "6981efb6cbb1db7fc011ea12f05d4bb1593f04b49128cd406f2cd69ae869d273" => :mountain_lion
   end
 
   head do
-    url 'git://swift.im/swift'
-    depends_on 'lua' => :recommended
+    url "git://swift.im/swift"
+    depends_on "lua" => :recommended
   end
 
-  depends_on 'scons' => :build
-  depends_on 'libidn'
-  depends_on 'boost'
+  depends_on "scons" => :build
+  depends_on "boost"
+  depends_on "libidn"
+  depends_on "openssl"
 
   def install
     boost = Formula["boost"]
@@ -42,6 +53,7 @@ class Libswiften < Formula
       libidn_includedir=#{libidn.include}
       libidn_libdir=#{libidn.lib}
       SWIFTEN_INSTALLDIR=#{prefix}
+      openssl=#{Formula["openssl"].opt_prefix}
     ]
 
     if build.with? "lua"
@@ -54,7 +66,7 @@ class Libswiften < Formula
     args << prefix
 
     scons *args
-    man1.install 'Swift/Packaging/Debian/debian/swiften-config.1' unless build.stable?
+    man1.install "Swift/Packaging/Debian/debian/swiften-config.1" unless build.stable?
   end
 
   test do

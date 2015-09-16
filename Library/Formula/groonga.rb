@@ -1,38 +1,49 @@
-require "formula"
-
 class Groonga < Formula
+  desc "Fulltext search engine and column store"
   homepage "http://groonga.org/"
-  url "http://packages.groonga.org/source/groonga/groonga-4.0.3.tar.gz"
-  sha1 "f5ed68228e82585903f672f3387785b3b7e24dea"
+  url "http://packages.groonga.org/source/groonga/groonga-5.0.7.tar.gz"
+  sha256 "f0f148916179993b22c14f914f148fd9bad3163071b106a36251e92a3869b710"
 
   bottle do
-    sha1 "a5de5410b9bf0155a56ad9c5202c401b66139245" => :mavericks
-    sha1 "9d182e379145bbfb8ee7c8184ac509e8876b8e29" => :mountain_lion
-    sha1 "7c2db670fbc5375e426ef076710d99835835b1f3" => :lion
+    sha256 "8d6f96fb3bf2212916e0bf0dcb4af23983b6f89fe0c29f553a03fcb76e4bfc31" => :yosemite
+    sha256 "02681009cdcfbad7c085380277706c8d3391ff9949c63f129135dfebdd015a4b" => :mavericks
+    sha256 "c5b2b8d400696df717b19d149ebd75a9407b19c96f7fa70863d5cbc1b49f0134" => :mountain_lion
   end
+
+  option "with-benchmark", "With benchmark program for developer use"
 
   depends_on "pkg-config" => :build
   depends_on "pcre"
   depends_on "msgpack"
   depends_on "mecab" => :optional
   depends_on "mecab-ipadic" if build.with? "mecab"
+  depends_on "lz4" => :optional
+  depends_on "openssl"
 
-  depends_on "glib" if build.include? "enable-benchmark"
+  depends_on "glib" if build.with? "benchmark"
 
-  option "enable-benchmark", "Enable benchmark program for developer use"
+  deprecated_option "enable-benchmark" => "with-benchmark"
 
   def install
     args = %W[
       --prefix=#{prefix}
       --with-zlib
       --disable-zeromq
+      --enable-mruby
+      --without-libstemmer
     ]
 
     args << "--enable-benchmark" if build.include? "enable-benchmark"
     args << "--with-mecab" if build.with? "mecab"
+    args << "--with-lz4" if build.with? "lz4"
 
     # ZeroMQ is an optional dependency that will be auto-detected unless we disable it
     system "./configure", *args
-    system "make install"
+    system "make", "install"
+  end
+
+  test do
+    output = shell_output("groonga --version")
+    assert_match /groonga #{version}/, output
   end
 end

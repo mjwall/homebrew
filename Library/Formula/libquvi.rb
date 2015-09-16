@@ -1,37 +1,34 @@
-require 'formula'
-
 class Libquvi < Formula
-  homepage 'http://quvi.sourceforge.net/'
-  url 'https://downloads.sourceforge.net/project/quvi/0.4/libquvi/libquvi-0.4.1.tar.bz2'
-  sha1 'b7ac371185c35a1a9a2135ef4ee61c86c48f78f4'
+  desc "C library to parse flash media stream properties"
+  homepage "http://quvi.sourceforge.net/"
+  url "https://downloads.sourceforge.net/project/quvi/0.4/libquvi/libquvi-0.4.1.tar.bz2"
+  sha256 "f5a2fb0571634483e8a957910f44e739f5a72eb9a1900bd10b453c49b8d5f49d"
+  revision 1
 
   bottle do
-    sha1 "0c7f04198c8ab41523ecf276654f1dc7d27ef4ed" => :mavericks
-    sha1 "46f9329a70b9b512c6cc17b25fbb4f09bbdcbe49" => :mountain_lion
-    sha1 "2ecd87014bbb3153a2b8420181f67af491614172" => :lion
+    revision 2
+    sha256 "99375bca427fb5cc368da9b09bec8890f87896b0d2329780420e1a4d2c131e16" => :yosemite
+    sha256 "b83f94653852b748d4e23a6ade9d5668a7052bf4747cb23c751d70b0698f9689" => :mavericks
+    sha256 "a252b3f6e2487839f1a3c352522ba5729f5adf200f418c8f5c7cfed7283b5171" => :mountain_lion
   end
 
-  depends_on 'pkg-config' => :build
-  depends_on 'lua'
+  depends_on "pkg-config" => :build
+  depends_on "lua"
 
-  resource 'scripts' do
-    url 'https://downloads.sourceforge.net/project/quvi/0.4/libquvi-scripts/libquvi-scripts-0.4.14.tar.xz'
-    sha1 'fe721c8d882c5c4a826f1339c79179c56bb0fe41'
+  resource "scripts" do
+    url "https://downloads.sourceforge.net/project/quvi/0.4/libquvi-scripts/libquvi-scripts-0.4.14.tar.xz"
+    sha256 "b8d17d53895685031cd271cf23e33b545ad38cad1c3bddcf7784571382674c65"
   end
 
   def install
-    scripts = prefix/'libquvi-scripts'
-    resource('scripts').stage do
+    scripts = prefix/"libquvi-scripts"
+    resource("scripts").stage do
       system "./configure", "--prefix=#{scripts}", "--with-nsfw"
-      system "make install"
+      system "make", "install"
     end
-    ENV.append_path 'PKG_CONFIG_PATH', "#{scripts}/lib/pkgconfig"
-
-    # Lua 5.2 does not have a proper lua.pc
-    ENV['liblua_CFLAGS'] = ' '
-    ENV['liblua_LIBS'] = '-llua'
+    ENV.append_path "PKG_CONFIG_PATH", "#{scripts}/lib/pkgconfig"
 
     system "./configure", "--disable-dependency-tracking", "--prefix=#{prefix}"
-    system "make install"
+    system "make", "install"
   end
 end

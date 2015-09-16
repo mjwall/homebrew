@@ -1,63 +1,52 @@
-require "formula"
 require "language/haskell"
 
 class GitAnnex < Formula
   include Language::Haskell::Cabal
 
+  desc "Manage files with git without checking in file contents"
   homepage "https://git-annex.branchable.com/"
-  url "http://hackage.haskell.org/package/git-annex-5.20140613/git-annex-5.20140613.tar.gz"
-  sha1 "45a889114f4687553abffb48b0603c863e1ce816"
+  url "https://hackage.haskell.org/package/git-annex-5.20150824/git-annex-5.20150824.tar.gz"
+  sha256 "45088dd5ff5a63ca38965e60843e42c1b8424b3437b58af68929cf61ef0819e4"
+  head "git://git-annex.branchable.com/"
 
   bottle do
-    cellar :any
-    sha1 "ccab493c68dcde317c08568d1b2974f6c20a33b4" => :mavericks
-    sha1 "26a68c960872dc2c81947cc4627a5b83d7f787ee" => :mountain_lion
-    sha1 "fcd4afb79ae66269577de915f1f9f531b805d3d8" => :lion
+    sha256 "3ee70b905cb836c18469d48b4e9b4114b07ce084867d776517b081a4676a0427" => :yosemite
+    sha256 "570ca4cbc6558ea5cc179827e2813979aeb215513b9bb3815653988a67a80916" => :mavericks
+    sha256 "6a953a69d1cdfa8307ce9e9b13521cb17ba0f22da0f1325b226b7bd6d35a57c9" => :mountain_lion
   end
 
-  depends_on "gcc" => :build
+  option "with-git-union-merge", "Build the git-union-merge tool"
+
   depends_on "ghc" => :build
   depends_on "cabal-install" => :build
   depends_on "pkg-config" => :build
   depends_on "gsasl"
   depends_on "libidn"
   depends_on "gnutls"
-  depends_on "gmp"
+  depends_on "quvi"
+
+  setup_ghc_compilers
 
   def install
     cabal_sandbox do
       cabal_install_tools "alex", "happy", "c2hs"
-      # gcc required to build gnuidn
-      gcc = Formula["gcc"]
-      cabal_install "--with-gcc=#{gcc.bin}/gcc-#{gcc.version_suffix}",
-                    "--only-dependencies"
+      cabal_install "--only-dependencies"
       cabal_install "--prefix=#{prefix}"
+
+      # this can be made the default behavior again once git-union-merge builds properly when bottling
+      if build.with? "git-union-merge"
+        system "make", "git-union-merge", "PREFIX=#{prefix}"
+        bin.install "git-union-merge"
+        system "make", "git-union-merge.1", "PREFIX=#{prefix}"
+      end
     end
     bin.install_symlink "git-annex" => "git-annex-shell"
-    system "make", "git-annex.1", "git-annex-shell.1", "git-union-merge.1"
-    man1.install "git-annex.1", "git-annex-shell.1", "git-union-merge.1"
+    cabal_clean_lib
   end
 
   test do
     # make sure git can find git-annex
-    ENV.prepend_path 'PATH', bin
-    # create a first git repository with an annex
-    mkdir "my_annex" do
-      system "git", "init"
-      system "git", "annex", "init", "my_annex"
-      cp bin/"git-annex", "bigfile"
-      system "git", "annex", "add", "bigfile"
-      system "git", "commit", "-am", "big file added"
-      assert File.symlink? "bigfile"
-    end
-    # and propagate its content to another
-    system "git", "clone", "my_annex", "my_annex_clone"
-    Dir.chdir "my_annex_clone" do
-      assert !File.file?("bigfile")
-      system "git", "annex", "get", "bigfile"
-      assert File.file? "bigfile"
-    end
-    # make test files writable so homebrew can drop them
-    chmod_R 0777, testpath
+    ENV.prepend_path "PATH", bin
+    system "git", "annex", "test"
   end
 end

@@ -1,20 +1,19 @@
-require 'formula'
-
 class Q < Formula
-  homepage 'https://github.com/harelba/q'
-  url 'https://github.com/harelba/q/archive/1.4.0.tar.gz'
-  sha1 'e8efe87aa691a7ab57e95f15cf4b2babfbabe945'
+  desc "Treat text as a database"
+  homepage "https://github.com/harelba/q"
+  url "https://github.com/harelba/q/archive/1.5.0.tar.gz"
+  sha256 "69bde3fb75aa1d42ba306576b135b8a72121a995e6d865cc8c18db289c602c4b"
+
+  head "https://github.com/harelba/q.git"
 
   def install
-    bin.install 'bin/q'
+    bin.install "bin/q"
   end
 
   test do
-    IO.popen("#{bin}/q 'select sum(c1) from -'", "w+") do |pipe|
-      1.upto(100) { |i| pipe.puts i }
-      pipe.close_write
-      assert_equal "5050\n", pipe.read
-    end
+    seq = (1..100).map(&:to_s).join("\n")
+    output = pipe_output("#{bin}/q 'select sum(c1) from -'", seq)
+    assert_equal "5050\n", output
   end
 end
 

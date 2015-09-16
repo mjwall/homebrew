@@ -1,33 +1,43 @@
-require 'formula'
-
 class Mariadb < Formula
-  homepage 'http://mariadb.org/'
-  url "http://ftp.osuosl.org/pub/mariadb/mariadb-10.0.12/source/mariadb-10.0.12.tar.gz"
-  sha1 "226251b2312bbe3e4cdac1ee8a6830c6fe246f1b"
+  desc "Drop-in replacement for MySQL"
+  homepage "https://mariadb.org/"
+  url "http://ftp.osuosl.org/pub/mariadb/mariadb-10.0.21/source/mariadb-10.0.21.tar.gz"
+  sha256 "4b9a32e15ceadefdb1057a02eb3e0addf702b75aef631a3c9194b832ecfa3545"
 
   bottle do
-    revision 1
-    sha1 "c06cd4d780c713bbfac8095453f19973ef177cc3" => :mavericks
-    sha1 "9ce7d7a2550a4d2a00a4650858d9996feace4387" => :mountain_lion
-    sha1 "f8fe22f96b81d606e1a3d52699638fdf5832b235" => :lion
+    sha256 "0e6f1eec4b6008c2df59cdbe611f0ce2c0f6a97e3ca8e0da1842787961b83c9b" => :el_capitan
+    sha256 "882f16e1470538aea11ac21f6ab354b83215f35c15bda104af90cc3c5c746107" => :yosemite
+    sha256 "5f5935d262db325ddbf217c6dbaa36c50a362bba6f84c52e65c16c4038c01f02" => :mavericks
+    sha256 "628ea0cd2b057cfad5fbb02d7caabe50c18860b71f6dd082dee9e8d477e88e92" => :mountain_lion
   end
 
-  depends_on 'cmake' => :build
-  depends_on 'pidof' unless MacOS.version >= :mountain_lion
+  devel do
+    url "http://ftp.osuosl.org/pub/mariadb/mariadb-10.1.7/source/mariadb-10.1.7.tar.gz"
+    sha256 "5bd3b80cf0f312751271a3446c12579c7081f93406e59a0cdfda8e133423c88f"
+    # fix compilation failure with clang in mroonga storage engine
+    # https://mariadb.atlassian.net/projects/MDEV/issues/MDEV-8551
+    patch :DATA
+  end
 
   option :universal
-  option 'with-tests', 'Keep test when installing'
-  option 'with-bench', 'Keep benchmark app when installing'
-  option 'with-embedded', 'Build the embedded server'
-  option 'with-libedit', 'Compile with editline wrapper instead of readline'
-  option 'with-archive-storage-engine', 'Compile with the ARCHIVE storage engine enabled'
-  option 'with-blackhole-storage-engine', 'Compile with the BLACKHOLE storage engine enabled'
-  option 'enable-local-infile', 'Build with local infile loading support'
+  option "with-tests", "Keep test when installing"
+  option "with-bench", "Keep benchmark app when installing"
+  option "with-embedded", "Build the embedded server"
+  option "with-libedit", "Compile with editline wrapper instead of readline"
+  option "with-archive-storage-engine", "Compile with the ARCHIVE storage engine enabled"
+  option "with-blackhole-storage-engine", "Compile with the BLACKHOLE storage engine enabled"
+  option "with-local-infile", "Build with local infile loading support"
 
-  conflicts_with 'mysql', 'mysql-cluster', 'percona-server',
+  deprecated_option "enable-local-infile" => "with-local-infile"
+
+  depends_on "cmake" => :build
+  depends_on "pidof" unless MacOS.version >= :mountain_lion
+  depends_on "openssl"
+
+  conflicts_with "mysql", "mysql-cluster", "percona-server",
     :because => "mariadb, mysql, and percona install the same binaries."
-  conflicts_with 'mysql-connector-c',
-    :because => 'both install MySQL client libraries'
+  conflicts_with "mysql-connector-c",
+    :because => "both install MySQL client libraries"
 
   def install
     # Don't hard-code the libtool path. See:
@@ -67,23 +77,38 @@ class Mariadb < Formula
       -DCOMPILATION_COMMENT=Homebrew
     ]
 
-    args << "-DWITH_UNIT_TESTS=OFF" if build.without? 'tests'
+    # disable TokuDB, which is currently not supported on Mac OS X
+    if build.stable?
+      args << "-DWITHOUT_TOKUDB=1"
+    else
+      args << "-DPLUGIN_TOKUDB=NO"
+    end
 
-    # oqgraph requires boost, but fails to compile against boost 1.54
-    # Upstream bug: https://mariadb.atlassian.net/browse/MDEV-4795
-    args << "-DWITHOUT_OQGRAPH_STORAGE_ENGINE=1"
+    args << "-DWITH_UNIT_TESTS=OFF" if build.without? "tests"
 
     # Build the embedded server
-    args << "-DWITH_EMBEDDED_SERVER=ON" if build.with? 'embedded'
+    args << "-DWITH_EMBEDDED_SERVER=ON" if build.with? "embedded"
 
     # Compile with readline unless libedit is explicitly chosen
-    args << "-DWITH_READLINE=yes" if build.without? 'libedit'
+    args << "-DWITH_READLINE=yes" if build.without? "libedit"
 
     # Compile with ARCHIVE engine enabled if chosen
-    args << "-DWITH_ARCHIVE_STORAGE_ENGINE=1" if build.with? 'archive-storage-engine'
+    if build.with? "archive-storage-engine"
+      if build.stable?
+        args << "-DWITH_ARCHIVE_STORAGE_ENGINE=1"
+      else
+        args << "-DPLUGIN_ARCHIVE=YES"
+      end
+    end
 
     # Compile with BLACKHOLE engine enabled if chosen
-    args << "-DWITH_BLACKHOLE_STORAGE_ENGINE=1" if build.with? 'blackhole-storage-engine'
+    if build.with? "blackhole-storage-engine"
+      if build.stable?
+        args << "-DWITH_BLACKHOLE_STORAGE_ENGINE=1"
+      else
+        args << "-DPLUGIN_BLACKHOLE=YES"
+      end
+    end
 
     # Make universal for binding to universal applications
     if build.universal?
@@ -92,37 +117,53 @@ class Mariadb < Formula
     end
 
     # Build with local infile loading support
-    args << "-DENABLED_LOCAL_INFILE=1" if build.include? 'enable-local-infile'
+    args << "-DENABLED_LOCAL_INFILE=1" if build.with? "local-infile"
 
     system "cmake", *args
     system "make"
-    system "make install"
+    system "make", "install"
 
     # Fix my.cnf to point to #{etc} instead of /etc
-    (etc+'my.cnf.d').mkpath
+    (etc+"my.cnf.d").mkpath
     inreplace "#{etc}/my.cnf" do |s|
       s.gsub!("!includedir /etc/my.cnf.d", "!includedir #{etc}/my.cnf.d")
     end
+    touch etc/"my.cnf.d/.homebrew_dont_prune_me"
 
-    unless build.include? 'client-only'
-      # Don't create databases inside of the prefix!
-      # See: https://github.com/Homebrew/homebrew/issues/4975
-      rm_rf prefix+'data'
+    # Don't create databases inside of the prefix!
+    # See: https://github.com/Homebrew/homebrew/issues/4975
+    rm_rf prefix+"data"
 
-      (prefix+'mysql-test').rmtree if build.without? 'tests' # save 121MB!
-      (prefix+'sql-bench').rmtree if build.without? 'bench'
+    (prefix+"mysql-test").rmtree if build.without? "tests" # save 121MB!
+    (prefix+"sql-bench").rmtree if build.without? "bench"
 
-      # Link the setup script into bin
-      bin.install_symlink prefix/"scripts/mysql_install_db"
+    # Link the setup script into bin
+    bin.install_symlink prefix/"scripts/mysql_install_db"
 
-      # Fix up the control script and link into bin
-      inreplace "#{prefix}/support-files/mysql.server" do |s|
-        s.gsub!(/^(PATH=".*)(")/, "\\1:#{HOMEBREW_PREFIX}/bin\\2")
-        # pidof can be replaced with pgrep from proctools on Mountain Lion
-        s.gsub!(/pidof/, 'pgrep') if MacOS.version >= :mountain_lion
+    # Fix up the control script and link into bin
+    inreplace "#{prefix}/support-files/mysql.server" do |s|
+      s.gsub!(/^(PATH=".*)(")/, "\\1:#{HOMEBREW_PREFIX}/bin\\2")
+      # pidof can be replaced with pgrep from proctools on Mountain Lion
+      s.gsub!(/pidof/, "pgrep") if MacOS.version >= :mountain_lion
+    end
+
+    bin.install_symlink prefix/"support-files/mysql.server"
+
+    if build.devel?
+      # Move sourced non-executable out of bin into libexec
+      libexec.mkpath
+      libexec.install "#{bin}/wsrep_sst_common"
+      # Fix up references to wsrep_sst_common
+      %W[
+        wsrep_sst_mysqldump
+        wsrep_sst_rsync
+        wsrep_sst_xtrabackup
+        wsrep_sst_xtrabackup-v2
+      ].each do |f|
+        inreplace "#{bin}/#{f}" do |s|
+          s.gsub!("$(dirname $0)/wsrep_sst_common", "#{libexec}/wsrep_sst_common")
+        end
       end
-
-      bin.install_symlink prefix/"support-files/mysql.server"
     end
   end
 
@@ -130,8 +171,8 @@ class Mariadb < Formula
     # Make sure the var/mysql directory exists
     (var+"mysql").mkpath
     unless File.exist? "#{var}/mysql/mysql/user.frm"
-      ENV['TMPDIR'] = nil
-      system "#{bin}/mysql_install_db", '--verbose', "--user=#{ENV['USER']}",
+      ENV["TMPDIR"] = nil
+      system "#{bin}/mysql_install_db", "--verbose", "--user=#{ENV["USER"]}",
         "--basedir=#{prefix}", "--datadir=#{var}/mysql", "--tmpdir=/tmp"
     end
   end
@@ -170,4 +211,30 @@ class Mariadb < Formula
     </plist>
     EOS
   end
+
+  test do
+    if build.with? "tests"
+      (prefix+"mysql-test").cd do
+        system "./mysql-test-run.pl", "status"
+      end
+    else
+      system "mysqld", "--version"
+    end
+  end
 end
+__END__
+diff --git a/storage/mroonga/vendor/groonga/CMakeLists.txt b/storage/mroonga/vendor/groonga/CMakeLists.txt
+index ebe7f6b..609f77d 100644
+--- a/storage/mroonga/vendor/groonga/CMakeLists.txt
++++ b/storage/mroonga/vendor/groonga/CMakeLists.txt
+@@ -192,6 +192,10 @@ if(CMAKE_COMPILER_IS_GNUCXX)
+   check_build_flag("-Wno-clobbered")
+ endif()
+
++if(CMAKE_COMPILER_IS_CLANGCXX)
++  MY_CHECK_AND_SET_COMPILER_FLAG("-fexceptions")
++endif()
++
+ if(NOT DEFINED CMAKE_C_COMPILE_OPTIONS_PIC)
+   # For old CMake
+   if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_CLANGCXX)

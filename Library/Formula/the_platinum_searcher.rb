@@ -1,33 +1,49 @@
-require "formula"
+require "language/go"
 
 class ThePlatinumSearcher < Formula
+  desc "Multi-platform code-search similar to ack and ag"
   homepage "https://github.com/monochromegane/the_platinum_searcher"
-  url "https://github.com/monochromegane/the_platinum_searcher/archive/v1.6.5.tar.gz"
-  sha1 "51658e4825b5f719fb37072da1b5035b5fde5734"
+  url "https://github.com/monochromegane/the_platinum_searcher/archive/v1.7.8.tar.gz"
+  sha256 "965f33c1b30d76d083fc425160ec2562acf64fb087dd62ebce510424bee787b8"
   head "https://github.com/monochromegane/the_platinum_searcher.git"
 
-  depends_on "go" => :build
-  depends_on :hg => :build
-
   bottle do
-    revision 1
-    sha1 "9e69bb5e18cacc5f6e4e9fc07ef31bd54a875b08" => :mavericks
-    sha1 "2443a197a960177d7a38930f82b209f8e3ce7c56" => :mountain_lion
-    sha1 "b97b398a0622bb48f31cf6cfd7905354a223912e" => :lion
+    cellar :any
+    sha256 "b54f456ff639feb502bb0d2e26e56d88226df18588617c43be4701cd04a68be7" => :yosemite
+    sha256 "a3d438fb5d3caf361b58b482b77d58a72534ed4d91d16194702d35c3790c182a" => :mavericks
+    sha256 "66fa09e74f3cb51a3e54623e0a6b4af1fe3cc1b2b010abd62157f7c189f06aec" => :mountain_lion
+  end
+
+  depends_on "go" => :build
+
+  go_resource "github.com/jessevdk/go-flags" do
+    url "https://github.com/jessevdk/go-flags.git",
+        :revision => "1b89bf73cd2c3a911d7b2a279ab085c4a18cf539"
+  end
+
+  go_resource "github.com/monochromegane/terminal" do
+    url "https://github.com/monochromegane/terminal.git",
+        :revision => "6d255869fb99937f1f287bd1fe3a034c6c4f68f6"
+  end
+
+  go_resource "github.com/shiena/ansicolor" do
+    url "https://github.com/shiena/ansicolor.git",
+        :revision => "a5e2b567a4dd6cc74545b8a4f27c9d63b9e7735b"
+  end
+
+  go_resource "golang.org/x/text" do
+    url "https://github.com/golang/text.git",
+        :revision => "3eb7007b740b66a77f3c85f2660a0240b284115a"
   end
 
   def install
-    (buildpath + "src/github.com/monochromegane/the_platinum_searcher").install "search"
+    mkdir_p buildpath/"src/github.com/monochromegane"
+    ln_s buildpath, buildpath/"src/github.com/monochromegane/the_platinum_searcher"
 
     ENV["GOPATH"] = buildpath
+    Language::Go.stage_deps resources, buildpath/"src"
 
-    system "go", "get", "github.com/shiena/ansicolor"
-    system "go", "get", "github.com/monochromegane/terminal"
-    system "go", "get", "github.com/jessevdk/go-flags"
-    system "go", "get", "code.google.com/p/go.text/transform"
-
-    system "go", "build", "-o", "pt"
-    bin.install "pt"
+    system "go", "build", "-o", bin/"pt", "cmd/pt/main.go"
   end
 
   test do

@@ -1,15 +1,15 @@
-require "formula"
-
 class Aria2 < Formula
+  desc "Download with resuming and segmented downloading"
   homepage "http://aria2.sourceforge.net/"
-  url "https://downloads.sourceforge.net/project/aria2/stable/aria2-1.18.7/aria2-1.18.7.tar.bz2"
-  sha1 "94a1fa9857c54af1b21b785c3a1375c3a758d517"
+  url "https://downloads.sourceforge.net/project/aria2/stable/aria2-1.19.0/aria2-1.19.0.tar.bz2"
+  mirror "https://mirrors.kernel.org/debian/pool/main/a/aria2/aria2_1.19.0.orig.tar.bz2"
+  sha256 "ae2b6fce7a0974c9156415cccf2395cd258580ab34eec2b34a8e76120b7240ce"
 
   bottle do
     cellar :any
-    sha1 "1836e8382c9f6e9a1893d8700b74b48f8b98385b" => :mavericks
-    sha1 "ab16e0ccfbb1aee0252d77d67b61842503affee7" => :mountain_lion
-    sha1 "178a5ec35b34814fa054d4a2e97ba600c8cb353f" => :lion
+    sha256 "74b5953f8370d15dae0c8461fe28152f356b71083d57f582ba93c2a29a9af2c0" => :yosemite
+    sha256 "41d5c1c5c076451bced12bad349911f6db3ece6b5ca685a9915e0c7d460f8109" => :mavericks
+    sha256 "e1a1d49a8dccd4e24371a685dd66d5d2a37e180c8fc2f733243cd68b77e3bf5b" => :mountain_lion
   end
 
   depends_on "pkg-config" => :build
@@ -28,15 +28,14 @@ class Aria2 < Formula
       --without-libgcrypt
     ]
 
-    # system zlib and sqlite don't include .pc files
-    ENV["ZLIB_CFLAGS"] = "-I/usr/include"
-    ENV["ZLIB_LIBS"] = "-L/usr/lib -lz"
-    ENV["SQLITE3_CFLAGS"] = "-I/usr/include"
-    ENV["SQLITE3_LIBS"] = "-L/usr/lib -lsqlite3"
-
     system "./configure", *args
-    system "make install"
+    system "make", "install"
 
     bash_completion.install "doc/bash_completion/aria2c"
+  end
+
+  test do
+    system "#{bin}/aria2c", "http://brew.sh"
+    assert File.exist? "index.html"
   end
 end

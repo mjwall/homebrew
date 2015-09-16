@@ -1,10 +1,9 @@
-require "formula"
-
 class Saxon < Formula
+  desc "XSLT and XQuery processor"
   homepage "http://saxon.sourceforge.net"
-  url "https://downloads.sourceforge.net/project/saxon/Saxon-HE/9.5/SaxonHE9-5-1-5J.zip"
-  sha1 "bb8476866cacb72e5567bdfc246570e7f0986e48"
-  version "9.5.1.5"
+  url "https://downloads.sourceforge.net/project/saxon/Saxon-HE/9.6/SaxonHE9-6-0-5J.zip"
+  sha256 "b39be0c675bcaa6b1e63f4cca7b194a7cca1a847f5937c16ce5568f0b2a0cabe"
+  version "9.6.0.5"
 
   def install
     libexec.install Dir["*.jar", "doc", "notices"]

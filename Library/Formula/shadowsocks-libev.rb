@@ -1,39 +1,26 @@
-require "formula"
-
 class ShadowsocksLibev < Formula
-  homepage "https://github.com/madeye/shadowsocks-libev"
-  url "https://github.com/madeye/shadowsocks-libev/archive/v1.4.6.tar.gz"
-  sha1 "b480559d6ad349138c46cfb00c9d1c3a6b2ef137"
+  desc "Libev port of shadowsocks"
+  homepage "https://github.com/shadowsocks/shadowsocks-libev"
+  url "https://github.com/shadowsocks/shadowsocks-libev/archive/v2.3.2.tar.gz"
+  sha256 "789b42e45efce85bdc983574282cab0092f32443630d7fedda667cfbf85e5b40"
+  head "https://github.com/shadowsocks/shadowsocks-libev.git"
 
   bottle do
-    sha1 "c85772ca098fc62a670fc9bf47994efc74b5dada" => :mavericks
-    sha1 "c34e3d20b2af99a5bd062be3d5f7dc8836ad3c7b" => :mountain_lion
-    sha1 "5cabc840ff1e289aeb48f9fc4e1d0f754c9d9ed8" => :lion
+    cellar :any
+    sha256 "3adefa985247603c32b2deb7b23055717aa467c7d123cadeda940876d9c8eab8" => :yosemite
+    sha256 "e4471fb4bafbd8db32b4a2f344e1d1f6ae1b27a17dc4261f72f142b881ae5942" => :mavericks
+    sha256 "787cd61add6520f45242cef060903bc3a53b25279181b753da32592f79e27688" => :mountain_lion
   end
 
-  head "https://github.com/madeye/shadowsocks-libev.git"
-
-  option "with-polarssl", "Use PolarSSL instead of OpenSSL"
-
-  depends_on "libev"
-  if build.with? "polarssl"
-    depends_on "polarssl"
-  else
-    depends_on "openssl"
-  end
+  depends_on "openssl"
 
   def install
     args = ["--prefix=#{prefix}"]
 
-    if build.with? "polarssl"
-      polarssl = Formula["polarssl"]
-
-      args << "--with-crypto-library=polarssl"
-      args << "--with-polarssl=#{polarssl.opt_prefix}"
-    end
-
     system "./configure", *args
-    system "make", "install"
+    system "make"
+
+    bin.install "src/ss-local", "src/ss-tunnel", "src/ss-server", "src/ss-manager"
 
     (buildpath/"shadowsocks-libev.json").write <<-EOS.undent
       {
@@ -47,8 +34,10 @@ class ShadowsocksLibev < Formula
     EOS
     etc.install "shadowsocks-libev.json"
 
-    inreplace "shadowsocks.8", "/etc/shadowsocks/config.json", "#{etc}/shadowsocks-libev.json"
-    man8.install "shadowsocks.8"
+    rm "man/ss-redir.1"
+    inreplace Dir["man/*"], "/etc/shadowsocks-libev/config.json", "#{etc}/shadowsocks-libev.json"
+    man8.install Dir["man/*.8"]
+    man1.install Dir["man/*.1"]
   end
 
   plist_options :manual => "#{HOMEBREW_PREFIX}/opt/shadowsocks-libev/bin/ss-local -c #{HOMEBREW_PREFIX}/etc/shadowsocks-libev.json"

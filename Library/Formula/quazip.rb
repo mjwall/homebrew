@@ -1,22 +1,21 @@
-require "formula"
-
 class Quazip < Formula
+  desc "C++ wrapper over Gilles Vollant's ZIP/UNZIP package"
   homepage "http://quazip.sourceforge.net/"
-  url "https://downloads.sourceforge.net/project/quazip/quazip/0.6.2/quazip-0.6.2.tar.gz"
-  sha1 "2fdcd063df645f94f047374d7d540b102fc683dc"
+  url "https://downloads.sourceforge.net/project/quazip/quazip/0.7.1/quazip-0.7.1.tar.gz"
+  sha256 "78c984103555c51e6f7ef52e3a2128e2beb9896871b2cc4d4dbd4d64bff132de"
 
   bottle do
     cellar :any
-    sha1 "1e61e9506d6f355b8d696e78866784e89e595e5b" => :mavericks
-    sha1 "6cdaaa01521a0659b580f7e0099472fe0285b7a7" => :mountain_lion
-    sha1 "e180385f38e14945a97472f5b44fffeea9924cdd" => :lion
+    sha256 "d15a12c624d377bd818458635ad078782659f313c223836f1689ed89cca32a63" => :yosemite
+    sha256 "d6ea39c00ad991be78e2b6fdd1d69a5c4079fc85ef6dbdbedab7c8becf77d0c7" => :mavericks
+    sha256 "a6a988cb89a12f6e7c2d5bd8ebe180f40b18f586f3bd1e09a6b881350daee637" => :mountain_lion
   end
 
   depends_on "qt"
 
   def install
     # On Mavericks we want to target libc++, this requires a unsupported/macx-clang-libc++ flag
-    if ENV.compiler == :clang and MacOS.version >= :mavericks
+    if ENV.compiler == :clang && MacOS.version >= :mavericks
       spec = "unsupported/macx-clang-libc++"
     else
       spec = "macx-g++"

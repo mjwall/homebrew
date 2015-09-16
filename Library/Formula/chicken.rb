@@ -1,34 +1,33 @@
-require 'formula'
-
 class Chicken < Formula
-  homepage 'http://www.call-cc.org/'
-  url 'http://code.call-cc.org/releases/4.9.0/chicken-4.9.0.1.tar.gz'
-  sha1 'd6ec6eb51c6d69e006cc72939b34855013b8535a'
+  desc "Compiler for the Scheme programming language"
+  homepage "http://www.call-cc.org/"
+  url "http://code.call-cc.org/releases/4.10.0/chicken-4.10.0.tar.gz"
+  sha256 "0e07f5abcd11961986950dbeaa5a40db415f8a1b65daff9c300e9b05b334899b"
 
-  head 'git://code.call-cc.org/chicken-core'
+  head "http://code.call-cc.org/git/chicken-core.git"
 
   bottle do
-    sha1 "18413b340d0dc2486f132dbd3997911d00eb3706" => :mavericks
-    sha1 "f29dfe8f310772927022f175d60cb30c7c761b2d" => :mountain_lion
-    sha1 "86d71f277efc7b45ae4a1d1b0bcab326f8aafdb1" => :lion
+    sha256 "829af14ce63b487de7300073f256efbea7ecbd876ee577bff1dbc3080ec60c3b" => :yosemite
+    sha256 "7b2c75d1cd7d3f74881885d6bf7522597beefe35a1ce99715ea1dff35d579e4b" => :mavericks
+    sha256 "1f46226c58b1b7cd92f4d0c68cc0583e2c5ec4c2cce60b53193afca9a5d8be19" => :mountain_lion
   end
 
   def install
     ENV.deparallelize
-    # Chicken uses a non-standard var. for this
-    args = ["PREFIX=#{prefix}", "PLATFORM=macosx", "C_COMPILER=#{ENV.cc}"]
-    args << "ARCH=x86-64" if MacOS.prefer_64_bit?
-    # necessary to fix build on older Xcodes due to different path,
-    # and to fix the build on CLT-only systems
-    args << "XCODE_DEVELOPER=#{MacOS::Xcode.prefix}"
-    args << "XCODE_TOOL_PATH=#{MacOS::Xcode.toolchain_path}/usr/bin"
+
+    args = %W[
+      PLATFORM=macosx
+      PREFIX=#{prefix}
+      C_COMPILER=#{ENV.cc}
+      LIBRARIAN=ar
+      POSTINSTALL_PROGRAM=install_name_tool
+    ]
+
     system "make", *args
     system "make", "install", *args
   end
 
   test do
-    output = `'#{bin}/csi' -e '(print (* 5 5))'`
-    assert_equal "25", output.strip
-    assert $?.success?
+    assert_equal "25", shell_output("#{bin}/csi -e '(print (* 5 5))'").strip
   end
 end

@@ -1,16 +1,25 @@
-require "formula"
-
 class Xrootd < Formula
+  desc "High performance, scalable, fault-tolerant access to data"
   homepage "http://xrootd.org"
-  url "http://xrootd.org/download/v4.0.2/xrootd-4.0.2.tar.gz"
-  sha1 "91b2193014b60d3d0430cf213d714822e3a14583"
+  url "http://xrootd.org/download/v4.1.1/xrootd-4.1.1.tar.gz"
+  sha256 "3e472ec8068adc76f10df8a1bb1c795bb37a0a9936d4a255cc62073eb86c70c4"
+  head "https://github.com/xrootd/xrootd.git"
+
+  bottle do
+    cellar :any
+    revision 1
+    sha1 "9a9d65cd4671a62253bf1d270d0e7e789e4385f7" => :yosemite
+    sha1 "81dc9c675bb2fff6a63079bd0d61c0a8dbad2344" => :mavericks
+    sha1 "02b5631c4943e11c45d03ce75fbd133f90170265" => :mountain_lion
+  end
 
   depends_on "cmake" => :build
+  depends_on "openssl"
 
   def install
     mkdir "build" do
       system "cmake", "..", *std_cmake_args
-      system "make install"
+      system "make", "install"
     end
     share.install prefix/"man"
   end

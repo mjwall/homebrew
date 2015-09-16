@@ -1,9 +1,15 @@
-require "formula"
-
 class Gitbucket < Formula
+  desc "GitHub clone"
   homepage "https://github.com/takezoe/gitbucket"
-  url "https://github.com/takezoe/gitbucket/releases/download/2.1/gitbucket.war"
-  sha256 "48ad9f399c6a8dabf38647e12f43139b33e8ede7136edc7f06270dc0beafe9f1"
+  url "https://github.com/takezoe/gitbucket/releases/download/3.6/gitbucket.war"
+  sha256 "bec6de463157d679d3887b940642f8e51661c4b98289b42abce9b9115dc82d4e"
+
+  bottle do
+    cellar :any
+    sha256 "4c996c9acce91bcf66ad53ec2b1f2f323c094a6985451c6b22a13f94f189cdb3" => :yosemite
+    sha256 "7ab8add459500bba14c2d0f9a75622c395a62bfd46e3dc578199aa4e104c492d" => :mavericks
+    sha256 "ba77f720b0a392b498760c821a62cc0842d8d09cd2bb4bc7edee0587fc86dd5e" => :mountain_lion
+  end
 
   head do
     url "https://github.com/takezoe/gitbucket.git"
@@ -47,5 +53,13 @@ class Gitbucket < Formula
   def caveats; <<-EOS.undent
     Note: When using launchctl the port will be 8080.
     EOS
+  end
+
+  test do
+    io = IO.popen("java -jar #{libexec}/gitbucket.war")
+    sleep 12
+    Process.kill("SIGINT", io.pid)
+    Process.wait(io.pid)
+    io.read !~ /Exception/
   end
 end

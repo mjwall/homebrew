@@ -1,14 +1,13 @@
-require 'formula'
-
 class Jam < Formula
-  homepage 'http://www.perforce.com/resources/documentation/jam'
-  url 'ftp://ftp.perforce.com/jam/jam-2.5.zip'
-  sha1 '794a3f4483315c6b9f010f03b592646d3815328c'
+  desc "Make-like build tool"
+  homepage "http://www.perforce.com/resources/documentation/jam"
+  url "https://swarm.workshop.perforce.com/projects/perforce_software-jam/download/main/jam-2.6.zip"
+  sha256 "7c510be24dc9d0912886c4364dc17a013e042408386f6b937e30bd9928d5223c"
 
-  conflicts_with 'ftjam', :because => 'both install a `jam` binary'
+  conflicts_with "ftjam", :because => "both install a `jam` binary"
 
   def install
-    system "make", "CC=#{ENV.cc}", "CFLAGS=#{ENV.cflags}"
-    bin.install "bin.macosx/jam", "bin.macosx/mkjambase"
+    system "make", "CC=#{ENV.cc}", "CFLAGS=#{ENV.cflags}", "LOCATE_TARGET=bin"
+    bin.install "bin/jam", "bin/mkjambase"
   end
 end

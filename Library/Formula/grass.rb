@@ -1,11 +1,11 @@
-require 'formula'
-
 class Grass < Formula
-  homepage 'http://grass.osgeo.org/'
+  desc "Geographic Resources Analysis Support System"
+  homepage "http://grass.osgeo.org/"
+  revision 1
 
   stable do
-    url "http://grass.osgeo.org/grass64/source/grass-6.4.3.tar.gz"
-    sha1 "925da985f3291c41c7a0411eaee596763f7ff26e"
+    url "http://grass.osgeo.org/grass64/source/grass-6.4.4.tar.gz"
+    sha256 "5ddba27b4e5495f602ee5249a07e287f342dd8e1422ea5d490c04311c731d274"
 
     # Patches that files are not installed outside of the prefix.
     patch :DATA
@@ -23,7 +23,7 @@ class Grass < Formula
   option "without-gui", "Build without WxPython interface. Command line tools still available."
 
   depends_on :macos => :lion
-  depends_on 'gcc' if MacOS.version >= :mountain_lion
+  depends_on "gcc" if MacOS.version >= :mountain_lion
   depends_on "pkg-config" => :build
   depends_on "gettext"
   depends_on "readline"
@@ -35,6 +35,7 @@ class Grass < Formula
   depends_on :postgresql => :optional
   depends_on :mysql => :optional
   depends_on "cairo"
+  depends_on "freetype"
   depends_on :x11  # needs to find at least X11/include/GL/gl.h
 
   fails_with :clang do
@@ -44,7 +45,7 @@ class Grass < Formula
   def headless?
     # The GRASS GUI is based on WxPython. Unfortunately, Lion does not include
     # this module so we have to drop it.
-    build.without? "gui" or MacOS.version == :lion
+    build.without?("gui") || MacOS.version == :lion
   end
 
   def install
@@ -80,10 +81,16 @@ class Grass < Formula
       args << "--with-opengl-includes=#{MacOS.sdk_path}/System/Library/Frameworks/OpenGL.framework/Headers"
     end
 
-    if headless? or build.without? 'wxmac'
+    if headless? || build.without?("wxmac")
       args << "--without-wxwidgets"
     else
       args << "--with-wxwidgets=#{Formula["wxmac"].opt_bin}/wx-config"
+    end
+
+    if build.with? "wxpython"
+      python_site_packages = HOMEBREW_PREFIX/"lib/python2.7/site-packages"
+      default_wx_path = File.read(python_site_packages/"wx.pth").strip
+      ENV.prepend_path "PYTHONPATH", python_site_packages/default_wx_path
     end
 
     args << "--enable-64bit" if MacOS.prefer_64_bit?

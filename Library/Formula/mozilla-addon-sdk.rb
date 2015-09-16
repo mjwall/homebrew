@@ -1,9 +1,8 @@
-require "formula"
-
 class MozillaAddonSdk < Formula
+  desc "Create Firefox add-ons using JS, HTML, and CSS"
   homepage "https://developer.mozilla.org/en-US/Add-ons/SDK"
-  url "http://ftp.mozilla.org/pub/mozilla.org/labs/jetpack/addon-sdk-1.16.zip"
-  sha1 "75cae8e46f685e5d7995bb83a50ee2bdd8bec2cc"
+  url "http://ftp.mozilla.org/pub/mozilla.org/labs/jetpack/addon-sdk-1.17.zip"
+  sha256 "16e29d92214a556c8422db156b541fb8c47addfcb3cd879e0a4ca879d6a31f65"
 
   def install
     libexec.install Dir["*"]

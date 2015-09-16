@@ -1,24 +1,20 @@
-require "formula"
-
 class LSmash < Formula
-  homepage "http://l-smash.github.io/l-smash/"
-  url "https://github.com/l-smash/l-smash.git", :tag => "v1.11.8", :shallow => false
+  desc "Tool for working with MP4 files"
+  homepage "https://l-smash.github.io/l-smash/"
+  url "https://github.com/l-smash/l-smash.git", :shallow => false,
+    :tag => "v2.9.1",
+    :revision => "4cea08d264933634db5bc06da9d8d88fb5ddae07"
   head "https://github.com/l-smash/l-smash.git"
 
   bottle do
     cellar :any
-    sha1 "1adaf173e775c8a8391f0aa86b022a983842889e" => :mavericks
-    sha1 "891f49e1d5589fb705eb52e89e7656df259feb2c" => :mountain_lion
-    sha1 "ca37cd43d1a0abcd702a3bb0316ba7ae2af8bd63" => :lion
+    sha256 "3703bdeb1dfe66aef898e60a990f4e64f0ab3c1fe26a49cf824b3c6998acaacc" => :yosemite
+    sha256 "78c5c52a90e1609694b43a45240126515f97be8a1d129a57215d4a7ba9e3717f" => :mavericks
+    sha256 "5e2cd2ae65a0aeb7d1429f18fbd41dd7bdbfc03fcd10f320e41fc0cf6c95aef4" => :mountain_lion
   end
 
   def install
-    args = ["--prefix=#{prefix}", "--enable-shared"]
-
-    # For getting version information correctly in the configure
-    buildpath.install_symlink cached_download/".git"
-
-    system "./configure", *args
+    system "./configure", "--prefix=#{prefix}", "--enable-shared"
     system "make", "install"
   end
 

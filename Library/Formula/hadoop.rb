@@ -1,9 +1,11 @@
-require "formula"
-
 class Hadoop < Formula
-  homepage "http://hadoop.apache.org/"
-  url "http://www.apache.org/dyn/closer.cgi?path=hadoop/common/hadoop-2.4.1/hadoop-2.4.1.tar.gz"
-  sha1 "bec3d911fd0b84cd4a7130fb212125c7ae51e878"
+  desc "Framework for distributed processing of large data sets"
+  homepage "https://hadoop.apache.org/"
+  url "https://www.apache.org/dyn/closer.cgi?path=hadoop/common/hadoop-2.7.1/hadoop-2.7.1.tar.gz"
+  mirror "https://archive.apache.org/dist/hadoop/common/hadoop-2.7.1/hadoop-2.7.1.tar.gz"
+  sha256 "991dc34ea42a80b236ca46ff5d207107bcc844174df0441777248fdb6d8c9aa0"
+
+  depends_on :java
 
   def install
     rm_f Dir["bin/*.cmd", "sbin/*.cmd", "libexec/*.cmd", "etc/hadoop/*.cmd"]
@@ -32,5 +34,9 @@ class Hadoop < Formula
     $JAVA_HOME has been set to be the output of:
       /usr/libexec/java_home
     EOS
+  end
+
+  test do
+    system bin/"hadoop", "fs", "-ls"
   end
 end

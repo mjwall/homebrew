@@ -1,22 +1,21 @@
-require 'formula'
-
 class Libsoup < Formula
-  homepage 'http://live.gnome.org/LibSoup'
-  url 'http://ftp.gnome.org/pub/GNOME/sources/libsoup/2.46/libsoup-2.46.0.tar.xz'
-  sha256 'fa3d5574c1a2df521242e2ca624a2b3057121798cab9f8f40525aa186a7b15a3'
+  desc "HTTP client/server library for GNOME"
+  homepage "https://live.gnome.org/LibSoup"
+  url "https://download.gnome.org/sources/libsoup/2.50/libsoup-2.50.0.tar.xz"
+  sha256 "1e01365ac4af3817187ea847f9d3588c27eee01fc519a5a7cb212bb78b0f667b"
 
   bottle do
-    sha1 "cf3892e012dd0c9273caeb7788c7152c7e552bf7" => :mavericks
-    sha1 "2adba3c1e1131bc2e75f5f2bde5c53b3dadbad6d" => :mountain_lion
-    sha1 "2d63bc470c1888cd71b0e09b37f61b3328ef3785" => :lion
+    sha256 "ee2c2f86d70ad5773bdd8163138f30b7dc9b362753a46080309e7824d465e13a" => :yosemite
+    sha256 "844f476c44c391a4d8f4fdb3e6178cc12b4d8ba5a01dce7671f0cc6d27e0983c" => :mavericks
+    sha256 "7f197f9fd8a36fa97d01830e3beb6973ba5dc2a654f924ee45e226a56be80574" => :mountain_lion
   end
 
-  depends_on 'pkg-config' => :build
-  depends_on 'intltool' => :build
-  depends_on 'glib-networking'
-  depends_on 'gnutls'
-  depends_on 'sqlite'
-  depends_on 'gobject-introspection' => :optional
+  depends_on "pkg-config" => :build
+  depends_on "intltool" => :build
+  depends_on "glib-networking"
+  depends_on "gnutls"
+  depends_on "sqlite"
+  depends_on "gobject-introspection" => :recommended
 
   def install
     args = [
@@ -35,6 +34,38 @@ class Libsoup < Formula
     end
 
     system "./configure", *args
-    system "make install"
+    system "make", "install"
+  end
+
+  test do
+    (testpath/"test.c").write <<-EOS.undent
+      #include <libsoup/soup.h>
+
+      int main(int argc, char *argv[]) {
+        guint version = soup_get_major_version();
+        return 0;
+      }
+    EOS
+    ENV.libxml2
+    gettext = Formula["gettext"]
+    glib = Formula["glib"]
+    flags = (ENV.cflags || "").split + (ENV.cppflags || "").split + (ENV.ldflags || "").split
+    flags += %W[
+      -I#{gettext.opt_include}
+      -I#{glib.opt_include}/glib-2.0
+      -I#{glib.opt_lib}/glib-2.0/include
+      -I#{include}/libsoup-2.4
+      -D_REENTRANT
+      -L#{gettext.opt_lib}
+      -L#{glib.opt_lib}
+      -L#{lib}
+      -lgio-2.0
+      -lglib-2.0
+      -lgobject-2.0
+      -lintl
+      -lsoup-2.4
+    ]
+    system ENV.cc, "test.c", "-o", "test", *flags
+    system "./test"
   end
 end

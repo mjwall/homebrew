@@ -1,28 +1,27 @@
-require 'formula'
-
 class SpatialiteTools < Formula
-  homepage 'https://www.gaia-gis.it/fossil/spatialite-tools/index'
-  url "http://www.gaia-gis.it/gaia-sins/spatialite-tools-4.2.0.tar.gz"
-  sha1 "de07042afa734b17c840318fa8772466f53f1831"
+  desc "CLI tools supporting SpatiaLite"
+  homepage "https://www.gaia-gis.it/fossil/spatialite-tools/index"
+  url "https://www.gaia-gis.it/gaia-sins/spatialite-tools-sources/spatialite-tools-4.3.0.tar.gz"
+  sha256 "f739859bc04f38735591be2f75009b98a2359033675ae310dffc3114a17ccf89"
 
   bottle do
     cellar :any
-    sha1 "37e91a6eb19748f4dc385f442b45b35012deb0f7" => :mavericks
-    sha1 "0390c9073ed99007be27114256b9a412592555ab" => :mountain_lion
-    sha1 "f118f37a57fa181b3295653f67bc084e64270d75" => :lion
+    sha256 "727464d0362152f24aa75ffb6ad60e7454394a75fbb2a07ba9e1436a6d7ac8dc" => :yosemite
+    sha256 "a6bd943c2d1bfed507c8b53aa1d2d8e00ea129ab3da6095b90eebf64c6e3b381" => :mavericks
+    sha256 "6dc0983b61eabf074d24acd3bcdc7df675a1abd7caf5069eb4598a81881049d4" => :mountain_lion
   end
 
-  depends_on 'pkg-config' => :build
-  depends_on 'libspatialite'
-  depends_on 'readosm'
+  depends_on "pkg-config" => :build
+  depends_on "libspatialite"
+  depends_on "readosm"
 
   def install
     # See: https://github.com/Homebrew/homebrew/issues/3328
-    ENV.append 'LDFLAGS', '-liconv'
+    ENV.append "LDFLAGS", "-liconv"
     # Ensure Homebrew SQLite is found before system SQLite.
     sqlite = Formula["sqlite"]
-    ENV.append 'LDFLAGS', "-L#{sqlite.opt_lib}"
-    ENV.append 'CFLAGS', "-I#{sqlite.opt_include}"
+    ENV.append "LDFLAGS", "-L#{sqlite.opt_lib}"
+    ENV.append "CFLAGS", "-I#{sqlite.opt_include}"
 
     system "./configure", "--disable-dependency-tracking",
                           "--prefix=#{prefix}"
@@ -30,6 +29,6 @@ class SpatialiteTools < Formula
   end
 
   test do
-    system "#{bin}/spatialite --version"
+    system bin/"spatialite", "--version"
   end
 end

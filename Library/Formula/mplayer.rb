@@ -1,16 +1,15 @@
-require 'formula'
-
 class Mplayer < Formula
-  homepage 'http://www.mplayerhq.hu/'
+  desc "UNIX movie player"
+  homepage "http://www.mplayerhq.hu/"
 
   stable do
     url "http://www.mplayerhq.hu/MPlayer/releases/MPlayer-1.1.1.tar.xz"
-    sha1 "ba2f3bd1442d04b17b0143680850273d928689c1"
+    sha256 "ce8fc7c3179e6a57eb3a58cb7d1604388756b8a61764cc93e095e7aff3798c76"
 
     # Fix compilation on 10.9, adapted from upstream revision r36500
     patch do
       url "https://gist.githubusercontent.com/jacknagel/7441175/raw/37657c264a6a3bb4d30dee14538c367f7ffccba9/vo_corevideo.h.patch"
-      sha1 "92717335aed9ec5d01fcf62f9787c6d50cf5d911"
+      sha256 "19296cbfa2d3b9af4f12d3fc8a4fdbf5b095bc85fc31b3328ab20bfbadb12b3d"
     end
   end
 
@@ -22,21 +21,23 @@ class Mplayer < Formula
   end
 
   head do
-    url "svn://svn.mplayerhq.hu/mplayer/trunk", :using => StrictSubversionDownloadStrategy
+    url "svn://svn.mplayerhq.hu/mplayer/trunk"
+    depends_on "subversion" => :build if MacOS.version <= :leopard
 
     # When building SVN, configure prompts the user to pull FFmpeg from git.
     # Don't do that.
     patch :DATA
   end
 
-  option 'with-x', 'Build with X11 support'
-  option 'without-osd', 'Build without OSD'
+  option "without-osd", "Build without OSD"
 
-  depends_on 'yasm' => :build
-  depends_on 'libcaca' => :optional
-  depends_on :x11 if build.with? 'x'
+  depends_on "yasm" => :build
+  depends_on "libcaca" => :optional
+  depends_on :x11 => :optional
 
-  if build.with? 'osd' or build.with? 'x'
+  deprecated_option "with-x" => "with-x11"
+
+  if build.with?("osd") || build.with?("x11")
     # These are required for the OSD. We can get them from X11, or we can
     # build our own.
     depends_on "fontconfig"
@@ -46,8 +47,11 @@ class Mplayer < Formula
 
   fails_with :clang do
     build 211
-    cause 'Inline asm errors during compile on 32bit Snow Leopard.'
+    cause "Inline asm errors during compile on 32bit Snow Leopard."
   end unless MacOS.prefer_64_bit?
+
+  # ld fails with: Unknown instruction for architecture x86_64
+  fails_with :llvm
 
   def install
     # It turns out that ENV.O1 fixes link errors with llvm.
@@ -67,14 +71,14 @@ class Mplayer < Formula
       --disable-libopenjpeg
     ]
 
-    args << "--enable-menu" if build.with? 'osd'
-    args << "--disable-x11" if build.without? 'x'
-    args << "--enable-freetype" if build.with?('osd') || build.with?('x')
-    args << "--enable-caca" if build.with? 'libcaca'
+    args << "--enable-menu" if build.with? "osd"
+    args << "--disable-x11" if build.without? "x11"
+    args << "--enable-freetype" if build.with?("osd") || build.with?("x11")
+    args << "--enable-caca" if build.with? "libcaca"
 
     system "./configure", *args
     system "make"
-    system "make install"
+    system "make", "install"
   end
 
   test do
@@ -83,16 +87,14 @@ class Mplayer < Formula
 end
 
 __END__
-diff --git a/configure b/configure
-index a1fba5f..5deaa80 100755
 --- a/configure
 +++ b/configure
-@@ -49,8 +49,6 @@ if test -e ffmpeg/mp_auto_pull ; then
+@@ -1532,8 +1532,6 @@
  fi
-
- if ! test -e ffmpeg ; then
+ 
+ if test "$ffmpeg_a" != "no" && ! test -e ffmpeg ; then
 -    echo "No FFmpeg checkout, press enter to download one with git or CTRL+C to abort"
 -    read tmp
-     if ! git clone --depth 1 git://source.ffmpeg.org/ffmpeg.git ffmpeg ; then
+     if ! git clone -b $FFBRANCH --depth 1 git://source.ffmpeg.org/ffmpeg.git ffmpeg ; then
          rm -rf ffmpeg
          echo "Failed to get a FFmpeg checkout"

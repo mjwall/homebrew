@@ -1,153 +1,106 @@
-require 'options'
-
-# This class holds the build-time options defined for a Formula,
-# and provides named access to those options during install.
 class BuildOptions
-  include Enumerable
-
-  attr_accessor :args
-  attr_accessor :universal
-  attr_accessor :cxx11
-  attr_reader :options
-  protected :options
-
-  def initialize args
-    @args = Options.coerce(args)
-    @options = Options.new
+  # @private
+  def initialize(args, options)
+    @args = args
+    @options = options
   end
 
-  def initialize_copy(other)
-    super
-    @options = other.options.dup
-    @args = other.args.dup
+  # True if a {Formula} is being built with a specific option
+  # (which isn't named `with-*` or `without-*`).
+  # @deprecated
+  def include?(name)
+    @args.include?("--#{name}")
   end
 
-  def add name, description=nil
-    description ||= case name.to_s
-      when "universal" then "Build a universal binary"
-      when "32-bit" then "Build 32-bit only"
-      when "c++11" then "Build using C++11 mode"
-      end.to_s
+  # True if a {Formula} is being built with a specific option.
+  # <pre>args << "--i-want-spam" if build.with? "spam"
+  #
+  # args << "--qt-gui" if build.with? "qt" # "--with-qt" ==> build.with? "qt"
+  #
+  # # If a formula presents a user with a choice, but the choice must be fulfilled:
+  # if build.with? "example2"
+  #   args << "--with-example2"
+  # else
+  #   args << "--with-example1"
+  # end</pre>
+  def with?(val)
+    name = val.respond_to?(:option_name) ? val.option_name : val
 
-    @options << Option.new(name, description)
-  end
-
-  def add_dep_option(dep)
-    name = dep.option_name
-    if dep.optional? && !has_option?("with-#{name}")
-      add("with-#{name}", "Build with #{name} support")
-    elsif dep.recommended? && !has_option?("without-#{name}")
-      add("without-#{name}", "Build without #{name} support")
-    end
-  end
-
-  def has_option? name
-    any? { |opt| opt.name == name }
-  end
-
-  def empty?
-    @options.empty?
-  end
-
-  def each(*args, &block)
-    @options.each(*args, &block)
-  end
-
-  def as_flags
-    @options.as_flags
-  end
-
-  def include? name
-    args.include? '--' + name
-  end
-
-  def with? val
-    if val.respond_to?(:option_name)
-      name = val.option_name
-    else
-      name = val
-    end
-
-    if has_option? "with-#{name}"
+    if option_defined? "with-#{name}"
       include? "with-#{name}"
-    elsif has_option? "without-#{name}"
-      not include? "without-#{name}"
+    elsif option_defined? "without-#{name}"
+      !include? "without-#{name}"
     else
       false
     end
   end
 
-  def without? name
-    not with? name
+  # True if a {Formula} is being built without a specific option.
+  # <pre>args << "--no-spam-plz" if build.without? "spam"
+  def without?(name)
+    !with? name
   end
 
+  # True if a {Formula} is being built as a bottle (i.e. binary package).
   def bottle?
-    args.include? '--build-bottle'
+    include? "build-bottle"
   end
 
+  # True if a {Formula} is being built with {Formula.head} instead of {Formula.stable}.
+  # <pre>args << "--some-new-stuff" if build.head?</pre>
+  # <pre># If there are multiple conditional arguments use a block instead of lines.
+  #  if build.head?
+  #    args << "--i-want-pizza"
+  #    args << "--and-a-cold-beer" if build.with? "cold-beer"
+  #  end</pre>
   def head?
-    args.include? '--HEAD'
+    include? "HEAD"
   end
 
+  # True if a {Formula} is being built with {Formula.devel} instead of {Formula.stable}.
+  # <pre>args << "--some-beta" if build.devel?</pre>
   def devel?
-    args.include? '--devel'
+    include? "devel"
   end
 
+  # True if a {Formula} is being built with {Formula.stable} instead of {Formula.devel} or {Formula.head}. This is the default.
+  # <pre>args << "--some-beta" if build.devel?</pre>
   def stable?
-    not (head? or devel?)
+    !(head? || devel?)
   end
 
-  # True if the user requested a universal build.
+  # True if a {Formula} is being built universally.
+  # e.g. on newer Intel Macs this means a combined x86_64/x86 binary/library.
+  # <pre>args << "--universal-binary" if build.universal?</pre>
   def universal?
-    universal || args.include?('--universal') && has_option?('universal')
+    include?("universal") && option_defined?("universal")
   end
 
-  # True if the user requested to enable C++11 mode.
+  # True if a {Formula} is being built in C++11 mode.
   def cxx11?
-    cxx11 || args.include?('--c++11') && has_option?('c++11')
+    include?("c++11") && option_defined?("c++11")
   end
 
-  # Request a 32-bit only build.
+  # True if a {Formula} is being built in 32-bit/x86 mode.
   # This is needed for some use-cases though we prefer to build Universal
   # when a 32-bit version is needed.
   def build_32_bit?
-    args.include?('--32-bit') && has_option?('32-bit')
+    include?("32-bit") && option_defined?("32-bit")
   end
 
+  # @private
   def used_options
-    Options.new(@options & @args)
+    @options & @args
   end
 
+  # @private
   def unused_options
-    Options.new(@options - @args)
+    @options - @args
   end
 
-  # Some options are implicitly ON because they are not explictly turned off
-  # by their counterpart option. This applies only to with-/without- options.
-  # implicit_options are needed because `depends_on 'spam' => 'with-stuff'`
-  # complains if 'spam' has stuff as default and only defines `--without-stuff`.
-  def implicit_options
-    implicit = unused_options.map do |option|
-      opposite_of option unless has_opposite_of? option
-    end.compact
-    Options.new(implicit)
-  end
+  private
 
-  def has_opposite_of? option
-    @options.include? opposite_of(option)
-  end
-
-  def opposite_of option
-    option = Option.new(option) unless Option === option
-
-    if option.name =~ /^with-(.+)$/
-      Option.new("without-#{$1}")
-    elsif option.name =~ /^without-(.+)$/
-      Option.new("with-#{$1}")
-    elsif option.name =~ /^enable-(.+)$/
-      Option.new("disable-#{$1}")
-    elsif option.name =~ /^disable-(.+)$/
-      Option.new("enable-#{$1}")
-    end
+  def option_defined?(name)
+    @options.include? name
   end
 end

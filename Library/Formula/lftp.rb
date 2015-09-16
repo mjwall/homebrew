@@ -1,14 +1,13 @@
-require "formula"
-
 class Lftp < Formula
+  desc "Sophisticated file transfer program"
   homepage "http://lftp.yar.ru/"
-  url "http://lftp.yar.ru/ftp/lftp-4.5.3.tar.gz"
-  sha1 "7c70d2b428c071fc19dd340bcd5bf04069b5fad0"
+  url "http://lftp.yar.ru/ftp/lftp-4.6.4.tar.xz"
+  sha256 "1e7cb674c83ace48172263f86847ed04bb6ab2f24116b11a8505f70a15e8805c"
 
   bottle do
-    sha1 "e77c6a4db177a1d57d4d64a26c0695f04458ce70" => :mavericks
-    sha1 "fae24a8f755a8a35a41059b78da9c12567659b61" => :mountain_lion
-    sha1 "9d9f72624246af050ef7131697d21874f487a8a7" => :lion
+    sha256 "7071f8760ce3f738428cd56eee8e1ff430f59de091e4152e4d3693379ef71749" => :yosemite
+    sha256 "0ea2e54a7bafd667130b06b56200ec46975b3b30969a649826c3e1ffe2345b50" => :mavericks
+    sha256 "4cd518335114f2c29a7514439563f5e2ebe3bff5a24fec1156496f0ae93edd92" => :mountain_lion
   end
 
   depends_on "pkg-config" => :build
@@ -20,5 +19,9 @@ class Lftp < Formula
                           "--prefix=#{prefix}",
                           "--with-openssl=#{Formula["openssl"].opt_prefix}"
     system "make", "install"
+  end
+
+  test do
+    system "#{bin}/lftp", "-c", "open ftp://mirrors.kernel.org; ls"
   end
 end

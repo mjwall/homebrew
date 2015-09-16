@@ -1,10 +1,15 @@
-require 'formula'
-
 class Texinfo < Formula
-  homepage 'http://www.gnu.org/software/texinfo/'
-  url 'http://ftpmirror.gnu.org/texinfo/texinfo-5.2.tar.gz'
-  mirror 'http://ftp.gnu.org/gnu/texinfo/texinfo-5.2.tar.gz'
-  sha1 'dc54edfbb623d46fb400576b3da181f987e63516'
+  desc "Official documentation format of the GNU project"
+  homepage "https://www.gnu.org/software/texinfo/"
+  url "http://ftpmirror.gnu.org/texinfo/texinfo-6.0.tar.gz"
+  mirror "https://ftp.gnu.org/gnu/texinfo/texinfo-6.0.tar.gz"
+  sha256 "83d3183290f34e7f958d209d0b20022c6fe9e921eb6fe94c27d988827d4878d2"
+
+  bottle do
+    sha256 "4bd78f0303130865e121263b7d7809a69816b30697da412b9c7101b4bf62cfaa" => :yosemite
+    sha256 "e976cec2aacc4a2754058dc54145e8aba61444bd01c5573a79b4a1912f4cda1a" => :mavericks
+    sha256 "c9ee6147bbc2c1a21b65fb4f2df220b811c1144e58d1ce53ad94e7dffd6633e8" => :mountain_lion
+  end
 
   keg_only :provided_by_osx, <<-EOS.undent
     Software that uses TeX, such as lilypond and octave, require a newer version
@@ -15,16 +20,18 @@ class Texinfo < Formula
     system "./configure", "--disable-dependency-tracking",
                           "--disable-install-warnings",
                           "--prefix=#{prefix}"
-    system "make install"
+    system "make", "install"
+  end
 
-    # The install warns about needing to install texinfo.tex and some other support files.
-    # The texinfo.tex in tex-live 2008 is identical to texinfo's version, so we can ignore this.
-
-    # However, it complains about installing epsf.tex in TEXMF/tex/generic/dvips, so let's do that...
-    # This somewhat breaks the homebrew philosophy, I am sorry.
-    # Also, we don't depend on tex-live, but this directory only exists if it is installed.
-    if File.exist? "#{HOMEBREW_PREFIX}/share/texmf-dist/" then
-      system "cp", "doc/epsf.tex", "#{HOMEBREW_PREFIX}/share/texmf-dist/tex/generic/dvips/"
-    end
+  test do
+    (testpath/"test.texinfo").write <<-EOS.undent
+      @ifnottex
+      @node Top
+      @top Hello World!
+      @end ifnottex
+      @bye
+    EOS
+    system "#{bin}/makeinfo", "test.texinfo"
+    assert_match /Hello World!/, File.read("test.info")
   end
 end

@@ -1,48 +1,30 @@
-require 'formula'
-
-class Ruby19 < Requirement
-  fatal true
-  default_formula 'ruby'
-
-  satisfy :build_env => false do
-    next unless which 'ruby'
-    version = /\d\.\d/.match `ruby --version 2>&1`
-
-    next unless version
-    Version.new(version.to_s) >= Version.new("1.9")
-  end
-
-  def modify_build_environment
-    ruby = which "ruby"
-    return unless ruby
-
-    ENV.prepend_path "PATH", ruby.dirname
-  end
-
-  def message; <<-EOS.undent
-    The Heroku Toolbelt requires Ruby >= 1.9
-    EOS
-  end
-end
-
 class HerokuToolbelt < Formula
-  homepage 'https://toolbelt.heroku.com/other'
-  url 'http://assets.heroku.com.s3.amazonaws.com/heroku-client/heroku-client-3.9.6.tgz'
-  sha1 'c198322c1cc25bc6b97a0fcef9897e5137c1aa6c'
+  desc "Everything you need to get started with Heroku"
+  homepage "https://toolbelt.heroku.com/other"
+  url "https://s3.amazonaws.com/assets.heroku.com/heroku-client/heroku-client-3.41.5.tgz"
+  sha256 "8cc11d8970784d48940af400caa59f02dd464dc63a45216c266795b0fb2d28be"
+  head "https://github.com/heroku/heroku.git"
 
-  depends_on Ruby19
+  depends_on :ruby => "1.9"
 
   def install
     libexec.install Dir["*"]
+    # turn off autoupdates (off by default in HEAD)
+    if build.stable?
+      inreplace libexec/"bin/heroku", "Heroku::Updater.inject_libpath", "Heroku::Updater.disable(\"Use `brew upgrade heroku-toolbelt` to update\")"
+    end
     bin.write_exec_script libexec/"bin/heroku"
+  end
+
+  def caveats
+    <<-EOS.undent
+      Unlike the standalone download for Heroku Toolbelt, the Homebrew package
+      does not come with Foreman. It is available via RubyGems, direct download,
+      and other installation methods. See https://ddollar.github.io/foreman/ for more info.
+    EOS
   end
 
   test do
     system "#{bin}/heroku", "version"
-  end
-
-  def caveats; <<-EOS.undent
-    heroku-toolbelt requires an installation of Ruby 1.9 or greater.
-    EOS
   end
 end

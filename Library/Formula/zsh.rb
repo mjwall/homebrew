@@ -1,21 +1,23 @@
-require 'formula'
-
 class Zsh < Formula
-  homepage 'http://www.zsh.org/'
-  url 'https://downloads.sourceforge.net/project/zsh/zsh/5.0.5/zsh-5.0.5.tar.bz2'
-  mirror 'http://www.zsh.org/pub/zsh-5.0.5.tar.bz2'
-  sha1 '75426146bce45ee176d9d50b32f1ced78418ae16'
+  desc "UNIX shell (command interpreter)"
+  homepage "http://www.zsh.org/"
+  url "https://downloads.sourceforge.net/project/zsh/zsh/5.1/zsh-5.1.tar.gz"
+  mirror "http://www.zsh.org/pub/zsh-5.1.tar.gz"
+  sha256 "e3731381810e690fb955cedfa8be51b0934bfa1ff38c709f54138960e3decd99"
 
   bottle do
-    sha1 "d8d7ba4016377561d5d823a30abff7c81fee1577" => :mavericks
-    sha1 "34fbefd6275edb7ee9fcc8d0ce3da4438ca412b1" => :mountain_lion
-    sha1 "63a53240287c1f11204217176aab8246eab4d43c" => :lion
+    sha256 "1509f461b1dee825cb66183409c04820f71e559c116201c4073ccd97eeb67704" => :el_capitan
+    sha256 "ef2e5dd13668edd59725b6a320db7513a6635ec7d3fd30891eb4e87ace6887e8" => :yosemite
+    sha256 "313444fc801db870fce3855e3ecda1f8a63aa24e44aaa448805d2dd61e62d584" => :mavericks
+    sha256 "78563c521de6861a2278f8e9d44aa8eac86e5c699d0d75018f805ec34286c9cd" => :mountain_lion
   end
 
-  depends_on 'gdbm'
-  depends_on 'pcre'
+  option "without-etcdir", "Disable the reading of Zsh rc files in /etc"
 
-  option 'disable-etcdir', 'Disable the reading of Zsh rc files in /etc'
+  deprecated_option "disable-etcdir" => "without-etcdir"
+
+  depends_on "gdbm"
+  depends_on "pcre"
 
   def install
     args = %W[
@@ -24,6 +26,7 @@ class Zsh < Formula
       --enable-scriptdir=#{share}/zsh/scripts
       --enable-site-fndir=#{HOMEBREW_PREFIX}/share/zsh/site-functions
       --enable-site-scriptdir=#{HOMEBREW_PREFIX}/share/zsh/site-scripts
+      --enable-runhelpdir=#{share}/zsh/help
       --enable-cap
       --enable-maildir-support
       --enable-multibyte
@@ -32,10 +35,10 @@ class Zsh < Formula
       --with-tcsetpgrp
     ]
 
-    if build.include? 'disable-etcdir'
-      args << '--disable-etcdir'
+    if build.without? "etcdir"
+      args << "--disable-etcdir"
     else
-      args << '--enable-etcdir=/etc'
+      args << "--enable-etcdir=/etc"
     end
 
     system "./configure", *args
@@ -48,15 +51,16 @@ class Zsh < Formula
     system "make", "install.info"
   end
 
-  test do
-    system "#{bin}/zsh", "--version"
-  end
-
   def caveats; <<-EOS.undent
     Add the following to your zshrc to access the online help:
       unalias run-help
       autoload run-help
-      HELPDIR=#{HOMEBREW_PREFIX}/share/zsh/helpfiles
+      HELPDIR=#{HOMEBREW_PREFIX}/share/zsh/help
     EOS
+  end
+
+  test do
+    assert_equal "homebrew\n",
+      shell_output("#{bin}/zsh -c 'echo homebrew'")
   end
 end

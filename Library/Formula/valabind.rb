@@ -1,36 +1,29 @@
-require "formula"
-
 class Valabind < Formula
+  desc "Vala bindings for radare, reverse engineering framework"
   homepage "http://radare.org/"
+  url "https://github.com/radare/valabind/archive/0.9.2.tar.gz"
+  sha256 "84cc2be21acb671e737dab50945b3717f1c68917faf23af443d3911774f5e578"
+  revision 1
+
   head "https://github.com/radare/valabind.git"
-  url "https://github.com/radare/valabind/archive/0.8.0.tar.gz"
-  sha1 "f677110477e14c2e18ac61c56730ab0e51ac450d"
+
+  bottle do
+    cellar :any
+    sha256 "ff86a94b9f31232eb5cb00285765d9b3df37a588cf01798c8c65c163f2d7416c" => :yosemite
+    sha256 "5d726be71c0fbd7cc9fbfcdf308f7f3734514606d6a7df5afbfead9642e085fe" => :mavericks
+    sha256 "fd736eaa0cc6f6823b48633cfd6be15dc2f26de0dba9b895fbe6ea50907e292c" => :mountain_lion
+  end
 
   depends_on "pkg-config" => :build
   depends_on "swig" => :run
   depends_on "vala"
 
-  # Fixes an issue in the vala version detection script.
-  # https://github.com/radare/valabind/pull/24
-  patch :DATA
-
   def install
     system "make"
     system "make", "install", "PREFIX=#{prefix}"
   end
-end
 
-__END__
-diff --git i/getvv w/getvv
-index 14183dc..59a42bb 100755
---- i/getvv
-+++ w/getvv
-@@ -3,7 +3,7 @@ IFS=:
- [ -z "${VALAC}" ] && VALAC=valac
- for a in $PATH; do
- 	if [ -e "$a/valac" ]; then
--		v=$(strings $a/${VALAC} | grep vala- | grep -v lib)
-+		v=$(cat $a/${VALAC} | strings | grep vala- | grep -v lib)
- 		if [ -n "$v" ]; then
- 			printf lib$v
- 			exit 0
+  test do
+    system bin/"valabind", "--help"
+  end
+end

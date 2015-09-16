@@ -1,43 +1,32 @@
-require 'formula'
-
 class Autogen < Formula
-  homepage 'http://autogen.sourceforge.net'
-  url 'http://ftpmirror.gnu.org/autogen/rel5.18.2/autogen-5.18.2.tar.gz'
-  mirror 'http://ftp.gnu.org/gnu/autogen/rel5.18.2/autogen-5.18.2.tar.gz'
-  sha1 'c63a0f567b4ad90c4243efbd2420c51e6b63309a'
+  desc "Automated text file generator"
+  homepage "http://autogen.sourceforge.net"
+  url "http://ftpmirror.gnu.org/autogen/rel5.18.4/autogen-5.18.4.tar.xz"
+  mirror "https://ftp.gnu.org/gnu/autogen/rel5.18.4/autogen-5.18.4.tar.xz"
+  sha256 "7fbaff0c25035aee5b96913de2c83d9a5cc973b8dc08d6b7489ecbcfd72eb84b"
 
   bottle do
-    sha1 "f0f73e326bc3f93b8e9095ed79a7baa50ca2e9b7" => :mavericks
-    sha1 "a4e6e9f7f9b60d18fd43b29c88a857dbab8b3b60" => :mountain_lion
-    sha1 "729f19be0284020f55ebc5b343a9811cde92630c" => :lion
+    revision 1
+    sha1 "caa1ffc8b0b5403586694ca15846145e731b935d" => :yosemite
+    sha1 "def1fe9af81c138662c763b2527aed3f19e24f56" => :mavericks
+    sha1 "c7507958613ed6dc9027037d34b117c806867434" => :mountain_lion
   end
 
-  # Please note, 5.18.2 is not the newest Autogen package.
-  # However, 5.18.3 has an unresolved guile issue and should not be updated to.
-  # Please do not submit an update to 5.18.3 until this issue (https://github.com/Homebrew/homebrew/pull/30406) is resolved.
-  # The ongoing 5.18.3 guile issue has been reported upstream to Autogen's devs.
-
-  depends_on 'guile'
-  depends_on 'pkg-config' => :build
-
-  fails_with :clang do
-    build 500
-    cause <<-EOS.undent
-      Clang does not appear to be able to handle variables using the name
-      'noreturn' as it is a new keyword in C++11, but it would normally be
-      used as in [[noreturn]] void foo() and not as a variable name. I'm not
-      sure if this is a compiler bug or what, but GCC handles it fine at
-      the moment.
-    EOS
-  end
+  depends_on "pkg-config" => :build
+  depends_on "guile"
 
   def install
     system "./configure", "--disable-debug",
                           "--disable-dependency-tracking",
+                          "--disable-silent-rules",
                           "--prefix=#{prefix}"
 
     # make and install must be separate steps for this formula
     system "make"
-    system "make install"
+    system "make", "install"
+  end
+
+  test do
+    system bin/"autogen", "-v"
   end
 end

@@ -1,19 +1,18 @@
-require "formula"
-
 class Xplanetfx < Formula
+  desc "Configure, run or daemonize xplanet for HQ Earth wallpapers"
   homepage "http://mein-neues-blog.de/xplanetFX/"
-  url "http://repository.mein-neues-blog.de:9000/archive/xplanetfx-2.5.30_all.tar.gz"
-  sha1 "5e22cff99c7869599dab834481a2b1195a6babf7"
-  version "2.5.30"
+  url "http://repository.mein-neues-blog.de:9000/archive/xplanetfx-2.6.6_all.tar.gz"
+  sha256 "59c49af68b6cafcbe4ebfd65979181a7f1e4416e024505b5b0d46f1cc04b082a"
+  version "2.6.6"
 
   bottle do
     cellar :any
-    sha1 "8d700982951f2818f306a33c0f0814242aeefc3e" => :mavericks
-    sha1 "f746580502debead14218ee7b9e0d961080a74f7" => :mountain_lion
-    sha1 "2dd399fb9be5c9d8ef944bbde252fc0c4dd98330" => :lion
+    revision 1
+    sha256 "d0df69f6cd30618e953e4474e196fa8221d3d984b5ffe1aef933616caced9b05" => :yosemite
+    sha256 "89b74842859932646369a6c0aae9356a7b124e142ec04fe564a40e28c81fd115" => :mavericks
+    sha256 "760a9f132f462b274a9068a21bfe1f806c295fbd1bb5fdb02a5de433dd7e2efe" => :mountain_lion
   end
 
-  option "without-perlmagick", "Build without PerlMagick support - used to check cloud map downloads"
   option "without-gui", "Build to run xplanetFX from the command-line only"
   option "with-gnu-sed", "Build to use GNU sed instead of OS X sed"
 
@@ -22,7 +21,6 @@ class Xplanetfx < Formula
   depends_on "wget"
   depends_on "coreutils"
   depends_on "gnu-sed" => :optional
-  depends_on "perlmagick" => :recommended
 
   if build.with? "gui"
     depends_on "librsvg"
@@ -36,14 +34,13 @@ class Xplanetfx < Formula
 
     prefix.install "bin", "share"
 
-    sPATH = "#{Formula["coreutils"].opt_prefix}/libexec/gnubin"
-    sPATH += ":#{Formula["gnu-sed"].opt_prefix}/libexec/gnubin" if build.with?("gnu-sed")
-    ENV.prepend_create_path "PERL5LIB", "#{HOMEBREW_PREFIX}/lib/perl5/site_perl/5.16.2" if build.with?("perlmagick")
+    path = "#{Formula["coreutils"].opt_libexec}/gnubin"
+    path += ":#{Formula["gnu-sed"].opt_libexec}/gnubin" if build.with?("gnu-sed")
     if build.with?("gui")
       ENV.prepend_create_path "PYTHONPATH", "#{HOMEBREW_PREFIX}/lib/python2.7/site-packages/gtk-2.0"
       ENV.prepend_create_path "GDK_PIXBUF_MODULEDIR", "#{HOMEBREW_PREFIX}/lib/gdk-pixbuf-2.0/2.10.0/loaders"
     end
-    bin.env_script_all_files(libexec+'bin', :PATH => "#{sPATH}:$PATH", :PYTHONPATH => ENV["PYTHONPATH"], :PERL5LIB => ENV["PERL5LIB"], :GDK_PIXBUF_MODULEDIR => ENV["GDK_PIXBUF_MODULEDIR"])
+    bin.env_script_all_files(libexec+"bin", :PATH => "#{path}:$PATH", :PYTHONPATH => ENV["PYTHONPATH"], :GDK_PIXBUF_MODULEDIR => ENV["GDK_PIXBUF_MODULEDIR"])
   end
 
   def post_install
@@ -52,5 +49,9 @@ class Xplanetfx < Formula
       ENV["GDK_PIXBUF_MODULEDIR"]="#{HOMEBREW_PREFIX}/lib/gdk-pixbuf-2.0/2.10.0/loaders"
       system "#{HOMEBREW_PREFIX}/bin/gdk-pixbuf-query-loaders", "--update-cache"
     end
+  end
+
+  test do
+    system "#{bin}/xplanetFX", "--help"
   end
 end

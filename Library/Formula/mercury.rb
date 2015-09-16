@@ -1,14 +1,13 @@
-require "formula"
-
 class Mercury < Formula
+  desc "Logic/functional programming language"
   homepage "http://mercurylang.org/"
-  url "http://dl.mercurylang.org/release/mercury-srcdist-14.01.tar.gz"
-  sha1 "619680675c68a0b953024b7ee4d3886a885d94de"
+  url "http://dl.mercurylang.org/release/mercury-srcdist-14.01.1.tar.gz"
+  sha256 "98f7cbde7a7425365400feef3e69f1d6a848b25dc56ba959050523d546c4e88b"
 
   bottle do
-    sha1 "5fd50b21e04dc43853a2b55aa9fbeda7a222e324" => :mavericks
-    sha1 "7f65e0c2a36a09078dbc1cf8091faaaf26b5e192" => :mountain_lion
-    sha1 "07ef0c73fdbb8e928d02a6a78a5ce1f422623e53" => :lion
+    sha1 "82730c120043d0a741d8deeceb79c82b7e232549" => :yosemite
+    sha1 "70e9c006f0287ff012441f469d1fa39b6ec5a291" => :mavericks
+    sha1 "0ab2f708f25879f4b894d89a271ddb23be0d984e" => :mountain_lion
   end
 
   depends_on "erlang" => :optional
@@ -24,18 +23,18 @@ class Mercury < Formula
 
     args << "--enable-erlang-grade" if build.with? "erlang"
     args << "--with-hwloc" if build.with? "hwloc"
-    args << "--enable-dotnet-grades" << "--enable-csharp-grade" if build.with? "mono"
+    args << "--enable-csharp-grade" if build.with? "mono"
 
     system "./configure", *args
 
     # The build system doesn't quite honour the mandir/infodir autoconf
     # parameters.
-    system "make", "install", "PARALLEL=-j", "INSTALL_MAN_DIR=#{man}", "INSTALL_INFO_DIR=#{info}"
+    system "make", "install", "PARALLEL=-j",
+                              "INSTALL_MAN_DIR=#{man}",
+                              "INSTALL_INFO_DIR=#{info}"
 
     # Remove batch files for windows.
-    Dir.glob("#{bin}/*.bat") do |path|
-      rm path
-    end
+    rm Dir.glob("#{bin}/*.bat")
   end
 
   test do
@@ -53,8 +52,6 @@ class Mercury < Formula
     system "#{bin}/mmc", "--make", "hello"
     assert File.exist?(testpath/"hello")
 
-    output = `#{testpath}/hello`
-    assert_equal test_string, output
-    assert_equal 0, $?.exitstatus
+    assert_equal test_string, shell_output("#{testpath}/hello")
   end
 end

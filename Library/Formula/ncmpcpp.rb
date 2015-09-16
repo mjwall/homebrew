@@ -1,43 +1,63 @@
-require 'formula'
-
 class Ncmpcpp < Formula
-  homepage 'http://ncmpcpp.rybczak.net/'
-  url 'http://ncmpcpp.rybczak.net/stable/ncmpcpp-0.5.10.tar.bz2'
-  sha1 '5e34733e7fbaf2862f04fdf8af8195ce860a9014'
+  desc "Ncurses-based client for the Music Player Daemon"
+  homepage "http://ncmpcpp.rybczak.net/"
+  url "http://ncmpcpp.rybczak.net/stable/ncmpcpp-0.6.6.tar.bz2"
+  sha256 "2b7408b207c3ffd1ddd11bcb9c0a1f2434bb80db990dcf482968cf915ebc0e67"
 
-  head do
-    url 'git://repo.or.cz/ncmpcpp.git'
-
-    depends_on :autoconf
-    depends_on :automake
-    depends_on :libtool
-    depends_on 'boost' # not needed by stable
-    depends_on 'readline'
+  bottle do
+    cellar :any
+    sha256 "d063bae471ea0a7af3bc33adb96d6963f7b703a20eb2d178624aafe42a7ee359" => :yosemite
+    sha256 "c6a96d12f6b6d29c5261b80c9ea11504e2e823515ca51aa2df6ff71928154d1b" => :mavericks
+    sha256 "6f09296129ada8c0e511150640f7f44439bf1a56829776a6245f3a9e9640ca2d" => :mountain_lion
   end
 
-  depends_on 'pkg-config' => :build
-  depends_on 'taglib'
-  depends_on 'libmpdclient'
-  depends_on 'fftw' if build.include? "visualizer"
+  head do
+    url "git://repo.or.cz/ncmpcpp.git"
 
-  fails_with :clang do
-    cause "'itsTempString' is a private member of 'NCurses::basic_buffer<char>'"
-  end if build.stable?
+    depends_on "autoconf" => :build
+    depends_on "automake" => :build
+    depends_on "libtool" => :build
+  end
 
-  option 'outputs', 'Compile with mpd outputs control'
-  option 'visualizer', 'Compile with built-in visualizer'
-  option 'clock', 'Compile with optional clock tab'
+  deprecated_option "outputs" => "with-outputs"
+  deprecated_option "visualizer" => "with-visualizer"
+  deprecated_option "clock" => "with-clock"
+
+  option "with-outputs", "Compile with mpd outputs control"
+  option "with-visualizer", "Compile with built-in visualizer"
+  option "with-clock", "Compile with optional clock tab"
+
+  depends_on "pkg-config" => :build
+  depends_on "libmpdclient"
+  depends_on "readline"
+
+  if MacOS.version < :mavericks
+    depends_on "boost" => "c++11"
+    depends_on "taglib" => "c++11"
+  else
+    depends_on "boost"
+    depends_on "taglib"
+  end
+
+  depends_on "fftw" if build.with? "visualizer"
+
+  needs :cxx11
 
   def install
-    ENV.append 'LDFLAGS', '-liconv'
-    args = ["--disable-dependency-tracking",
-            "--prefix=#{prefix}",
-            "--with-taglib",
-            "--with-curl",
-            "--enable-unicode"]
-    args << '--enable-outputs' if build.include? 'outputs'
-    args << '--enable-visualizer' if build.include? 'visualizer'
-    args << '--enable-clock' if build.include? 'clock'
+    ENV.cxx11
+    ENV.append "LDFLAGS", "-liconv"
+
+    args = [
+      "--disable-dependency-tracking",
+      "--prefix=#{prefix}",
+      "--with-taglib",
+      "--with-curl",
+      "--enable-unicode",
+    ]
+
+    args << "--enable-outputs" if build.with? "outputs"
+    args << "--enable-visualizer" if build.with? "visualizer"
+    args << "--enable-clock" if build.with? "clock"
 
     if build.head?
       # Also runs configure
@@ -45,6 +65,6 @@ class Ncmpcpp < Formula
     else
       system "./configure", *args
     end
-    system "make install"
+    system "make", "install"
   end
 end

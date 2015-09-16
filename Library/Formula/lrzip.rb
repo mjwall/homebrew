@@ -1,18 +1,24 @@
-require 'formula'
-
 class Lrzip < Formula
-  homepage 'http://lrzip.kolivas.org'
-  url 'http://ck.kolivas.org/apps/lrzip/lrzip-0.614.tar.bz2'
-  sha1 'b3c2149c9ca353f595d7f2774262244cc56a7500'
+  desc "Compression program with a very high compression ratio"
+  homepage "http://lrzip.kolivas.org"
+  url "http://ck.kolivas.org/apps/lrzip/lrzip-0.621.tar.bz2"
+  sha256 "31c26fbee8b9b0bd413ca214862dbc0d9e6d3477f23e9839774936bf140ceb6b"
 
-  depends_on 'pkg-config' => :build
+  bottle do
+    cellar :any
+    sha256 "be8250575e5bb6b3e322d9ca26f333c2918668672349e8f3a489c7d1ddbc4c30" => :yosemite
+    sha256 "188a28b951eda33fc61bb166a2dd0ab44990d471535e746eadaf9ba8ad095cb5" => :mavericks
+    sha256 "1a36857c2c25388efe5fd26b52bb7501084ef2b0d94dec353debf14222f9a849" => :mountain_lion
+  end
+
+  depends_on "pkg-config" => :build
   depends_on "lzo"
 
   def install
     system "./configure", "--disable-dependency-tracking",
                           "--prefix=#{prefix}"
     system "make"
-    system "make install"
+    system "make", "install"
   end
 
   test do

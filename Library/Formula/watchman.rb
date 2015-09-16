@@ -1,10 +1,18 @@
-require "formula"
-
 class Watchman < Formula
+  desc "Watch files and take action when they change"
   homepage "https://github.com/facebook/watchman"
+  url "https://github.com/facebook/watchman/archive/v3.7.0-brew.tar.gz"
+  version "3.7.0"
+  sha256 "55a3ea1ee3990a5e5c11f1a37ad5bafbb63e8002f48f449c083e598f6f332154"
+
   head "https://github.com/facebook/watchman.git"
-  url "https://github.com/facebook/watchman/archive/v2.9.8.tar.gz"
-  sha1 "f2ddfb5d42dce32da71dd789f63b705526fc9758"
+
+  bottle do
+    sha256 "72447a975cbe1ee5edf462e61f2a0182e291e60cb0195b47f57bca4e987a5ff6" => :el_capitan
+    sha256 "988bc7562fe67087f281935d2b064c172161b036a22539c50ec04b215235749c" => :yosemite
+    sha256 "ae7410503f560b5ad62277e468a477c6cf7457986834ca7e2d13871661d7a131" => :mavericks
+    sha256 "cc77325547e91585adbdf7341808abbced3c352ff73742365592b1654184f2dd" => :mountain_lion
+  end
 
   depends_on "autoconf" => :build
   depends_on "automake" => :build
@@ -17,14 +25,19 @@ class Watchman < Formula
                           "--prefix=#{prefix}",
                           "--with-pcre"
     system "make"
-    system "make install"
+    system "make", "install"
   end
 
-  def caveats; <<-EOS.undent
-    To increase file limits add 'kern.maxfiles=10485760' and 'kern.maxfilesperproc=10485760'
-    to /etc/sysctl.conf (use 'sysctl -w' to do so immediately).
+  test do
+    # Currently fails under HOMEBREW_SANDBOX: Operation not permitted
+    # "Failed to open /path/to/LaunchAgents/plist for write"
+    system "#{bin}/watchman", "shutdown-server"
+    system "#{bin}/watchman", "watch", testpath
 
-    See https://github.com/facebook/watchman#max-os-file-descriptor-limits
-    EOS
+    list = shell_output("#{bin}/watchman watch-list")
+    if list.index(testpath).nil?
+      raise "failed to watch tmpdir"
+    end
+    system "#{bin}/watchman", "watch-del", testpath
   end
 end

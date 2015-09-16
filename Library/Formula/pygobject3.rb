@@ -1,64 +1,42 @@
-require 'formula'
-
 class Pygobject3 < Formula
-  homepage 'http://live.gnome.org/PyGObject'
-  url 'http://ftp.gnome.org/pub/GNOME/sources/pygobject/3.12/pygobject-3.12.2.tar.xz'
-  sha256 '7e7a3d349acf5bb4b68f8539a42e67958840a67cd4f0341ee9aa49189af2a522'
+  desc "GLib/GObject/GIO Python bindings for Python 3"
+  homepage "https://live.gnome.org/PyGObject"
+  url "https://download.gnome.org/sources/pygobject/3.16/pygobject-3.16.2.tar.xz"
+  sha256 "de620e00fe7ecb788aa2dc0d664e41f71b8e718e728168e8d982cf193a9e7e64"
 
-  option 'with-tests', 'run tests'
-
-  depends_on 'pkg-config' => :build
-
-  # these dependencies are not required for `brew test`, but rather for
-  # the tests included with the source code.
-  if build.with? 'tests'
-    depends_on 'automake' => :build
-    depends_on 'autoconf' => :build
-    depends_on 'libtool' => :build
-    depends_on 'gnome-common' => :build
-    depends_on 'gtk+3' => :build
+  bottle do
+    sha256 "75149598f8cf980feafe170e6ba007f6e75e774a2ed2a5539d5df70cdb458735" => :yosemite
+    sha256 "26d501f9063231c6c77bc72298f0cb8b05c22226cbdca2df55b84f5f1aaed02c" => :mavericks
+    sha256 "c3b842901e70cf25698ba203f2137f757d62cee06cfb90007cdf04265ac523ae" => :mountain_lion
   end
 
-  depends_on 'libffi' => :optional
-  depends_on 'glib'
-  depends_on :python => :recommended
-  depends_on :python3 => :optional
-  depends_on 'py2cairo' if build.with? 'python'
-  depends_on 'py3cairo' if build.with? 'python3'
-  depends_on 'gobject-introspection'
-
   option :universal
+  option "without-python", "Build without python2 support"
 
-  patch do
-    url "https://gist.githubusercontent.com/krrk/6439665/raw/a527e14cd3a77c19b089f27bea884ce46c988f55/pygobject-fix-module.patch"
-    sha1 "1d7aad99256d87d616a41b7026cd05267bd9f97f"
-  end if build.with? 'tests'
+  depends_on "pkg-config" => :build
+  depends_on "libffi" => :optional
+  depends_on "glib"
+  depends_on :python3 => :optional
+  depends_on "py2cairo" if build.with? "python"
+  depends_on "py3cairo" if build.with? "python3"
+  depends_on "gobject-introspection"
 
   def install
     ENV.universal_binary if build.universal?
 
-    if build.with? 'tests'
-      # autogen.sh is necessary to update the build system after the above
-      # patch and XDG_DATA_DIRS needs to be fixed for some tests to run
-      inreplace 'tests/Makefile.am', '/usr/share', HOMEBREW_PREFIX/'share'
-      system "./autogen.sh"
-    end
-
-    Language::Python.each_python(build) do |python, version|
-      ENV["PYTHON"] = "#{python}" if Formula[python].installed?
-      system "./configure", "--disable-dependency-tracking", "--prefix=#{prefix}"
+    Language::Python.each_python(build) do |python, _version|
+      system "./configure", "--disable-dependency-tracking", "--prefix=#{prefix}", "PYTHON=#{python}"
       system "make", "install"
-      system "make", "check" if build.with? 'tests'
       system "make", "clean"
     end
   end
 
   test do
-    Pathname('test.py').write <<-EOS.undent
+    Pathname("test.py").write <<-EOS.undent
     import gi
     assert("__init__" in gi.__file__)
     EOS
-    Language::Python.each_python(build) do |python, version|
+    Language::Python.each_python(build) do |python, _version|
       system python, "test.py"
     end
   end

@@ -1,21 +1,20 @@
-require 'formula'
-
 class Orc < Formula
-  homepage 'http://cgit.freedesktop.org/gstreamer/orc/'
-  url 'http://gstreamer.freedesktop.org/src/orc/orc-0.4.21.tar.xz'
-  sha1 '519a054cd00a52d1819367a510151742051aedc3'
+  desc "Oil Runtime Compiler (ORC)"
+  homepage "http://cgit.freedesktop.org/gstreamer/orc/"
+  url "http://gstreamer.freedesktop.org/src/orc/orc-0.4.23.tar.xz"
+  sha256 "767eaebce2941737b43368225ec54598b3055ca78b4dc50c4092f5fcdc0bdfe7"
 
   bottle do
     cellar :any
-    sha1 "6de0850741bbf8184666d242a4ce7c927ddcbebe" => :mavericks
-    sha1 "13c06e141b56b09c278682019edcb70f73c606fe" => :mountain_lion
-    sha1 "c089a76d9bfdfe1f5e6e6201a228d45412385e79" => :lion
+    sha1 "e85053dcb4751277a06e4e3b72a4e63a74bdb907" => :yosemite
+    sha1 "4997cd243a86e7eb26c6d63e1cf3901da5281729" => :mavericks
+    sha1 "b509729d8f6f27062c0f5e2f9a54cec143b8d98c" => :mountain_lion
   end
 
   def install
     system "./configure", "--disable-dependency-tracking",
                           "--prefix=#{prefix}",
                           "--disable-gtk-doc"
-    system "make install"
+    system "make", "install"
   end
 end

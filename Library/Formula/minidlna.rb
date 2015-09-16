@@ -1,11 +1,25 @@
-require "formula"
-
 class Minidlna < Formula
+  desc "Media server software, compliant with DLNA/UPnP-AV clients"
   homepage "http://sourceforge.net/projects/minidlna/"
-  url "https://downloads.sourceforge.net/project/minidlna/minidlna/1.1.3/minidlna-1.1.3.tar.gz"
-  sha1 "3e5b907fd35b667eb50af98e1f986c7f461a6042"
+  url "https://downloads.sourceforge.net/project/minidlna/minidlna/1.1.4/minidlna-1.1.4.tar.gz"
+  sha256 "9814c04a2c506a0dd942c4218d30c07dedf90dabffbdef2d308a3f9f23545314"
+  revision 2
 
-  depends_on "libav"
+  bottle do
+    cellar :any
+    sha256 "8f9e4ee18d746731d37330c3b04b729235d16b49567a6980a3f7d76e37fe444a" => :yosemite
+    sha256 "d42575d92f63cfc68bff7d4fcf68b6aa4738490f66f016625099eed627e803b7" => :mavericks
+    sha256 "ed8cb39eed82926932beed72e00d6c96e22eabfe39f4296f5345079da78813d5" => :mountain_lion
+  end
+
+  head do
+    url "git://git.code.sf.net/p/minidlna/git"
+    depends_on "autoconf" => :build
+    depends_on "automake" => :build
+    depends_on "libtool" => :build
+    depends_on "gettext" => :build
+  end
+
   depends_on "libexif"
   depends_on "jpeg"
   depends_on "libid3tag"
@@ -15,13 +29,9 @@ class Minidlna < Formula
   depends_on "sqlite"
   depends_on "ffmpeg"
 
-  patch do
-    url "http://sourceforge.net/p/minidlna/patches/104/attachment/0001-Remove-check-for-getifaddr-returning-IFF_SLAVE-if-IF.patch"
-    sha1 "768b119a59c803af4d074138b70b245aa72e426f"
-  end
-
   def install
     ENV.append_to_cflags "-std=gnu89"
+    system "./autogen.sh" if build.head?
     system "./configure", "--exec-prefix=#{prefix}"
     system "make", "install"
     sample_config_path.write sample_config
@@ -43,9 +53,9 @@ class Minidlna < Formula
 
   def sample_config; <<-EOS.undent
     friendly_name=Mac DLNA Server
-    media_dir=#{ENV['HOME']}/.config/minidlna/media
-    db_dir=#{ENV['HOME']}/.config/minidlna/cache
-    log_dir=#{ENV['HOME']}/.config/minidlna
+    media_dir=#{ENV["HOME"]}/.config/minidlna/media
+    db_dir=#{ENV["HOME"]}/.config/minidlna/cache
+    log_dir=#{ENV["HOME"]}/.config/minidlna
     EOS
   end
 

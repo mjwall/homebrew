@@ -1,35 +1,34 @@
-require "formula"
-
 class Sickbeard < Formula
+  desc "PVR application to search and manage TV shows"
   homepage "http://www.sickbeard.com/"
   head "https://github.com/midgetspy/Sick-Beard.git"
-  url "https://github.com/midgetspy/Sick-Beard/archive/build-505.tar.gz"
-  sha1 "ac49ccb36451958e00d842cb89caf55f2fcd45f8"
+  url "https://github.com/midgetspy/Sick-Beard/archive/build-507.tar.gz"
+  sha256 "eaf95ac78e065f6dd8128098158b38674479b721d95d937fe7adb892932e9101"
 
   bottle do
-    sha1 "2b0f341d4c6f8b0392b59fe6216d2c35e9975ed0" => :mavericks
-    sha1 "bbaa31a3f83779ff2f8bd0eb84e5005c35ca8f5a" => :mountain_lion
-    sha1 "4dd86fff9ef46a4d58c12eb4ffce0254baedd4f9" => :lion
+    sha1 "d144a55f9a667036255b373f7fcf294455d447e2" => :yosemite
+    sha1 "2c47e5cec2a12f46f57cff89f29cb34f14b72183" => :mavericks
+    sha1 "1a2abb4fcbae529e5c378d5ca75f506c726a8a0b" => :mountain_lion
   end
 
   resource "Markdown" do
-    url "https://pypi.python.org/packages/source/M/Markdown/Markdown-2.4.tar.gz"
-    sha1 "7a4a96cd79c4e36918484c634055c4cc27bdf7d4"
+    url "https://pypi.python.org/packages/source/M/Markdown/Markdown-2.4.1.tar.gz"
+    sha256 "812ec5249f45edc31330b7fb06e52aaf6ab2d83aa27047df7cb6837ef2d269b6"
   end
 
   resource "Cheetah" do
     url "https://pypi.python.org/packages/source/C/Cheetah/Cheetah-2.4.4.tar.gz"
-    sha1 "c218f5d8bc97b39497680f6be9b7bd093f696e89"
+    sha256 "be308229f0c1e5e5af4f27d7ee06d90bb19e6af3059794e5fd536a6f29a9b550"
   end
 
   def install
-    # TODO - strip down to the minimal install
+    # TODO: - strip down to the minimal install
     prefix.install_metafiles
     libexec.install Dir["*"]
 
     ENV["CHEETAH_INSTALL_WITHOUT_SETUPTOOLS"] = "1"
     ENV.prepend_create_path "PYTHONPATH", libexec+"lib/python2.7/site-packages"
-    install_args = [ "setup.py", "install", "--prefix=#{libexec}" ]
+    install_args = ["setup.py", "install", "--prefix=#{libexec}"]
 
     resource("Markdown").stage { system "python", *install_args }
     resource("Cheetah").stage { system "python", *install_args }

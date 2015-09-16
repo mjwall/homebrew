@@ -1,21 +1,17 @@
-require 'formula'
-
 class GitTracker < Formula
-  homepage 'https://github.com/stevenharman/git_tracker'
-  url 'https://github.com/stevenharman/git_tracker/archive/v1.6.3.tar.gz'
-  sha1 'c748e564f176165dba2498637e0b99f27647b88a'
+  desc "Integrate Pivotal Tracker into git use"
+  homepage "https://github.com/stevenharman/git_tracker"
+  url "https://github.com/stevenharman/git_tracker/archive/v1.6.3.tar.gz"
+  sha256 "8864f4a3699c32ff56b3131bfe809a81b7446b2610cf0896015ac49a39b039c9"
 
-  head 'https://github.com/stevenharman/git_tracker.git'
+  head "https://github.com/stevenharman/git_tracker.git"
 
   def install
-    rake 'standalone:install', "prefix=#{prefix}"
+    rake "standalone:install", "prefix=#{prefix}"
   end
 
   test do
-    require 'open3'
-    Open3.popen3("#{bin}/git-tracker", "help") do |_, stdout, _|
-      install_message = /\Agit-tracker \d+(\.\d+)* is installed\.\z/
-      assert install_message.match(stdout.readline.strip), "git-tracker is not installed"
-    end
+    output = shell_output("#{bin}/git-tracker help")
+    assert_match /git-tracker \d+(\.\d+)* is installed\./, output
   end
 end

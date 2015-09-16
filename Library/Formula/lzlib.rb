@@ -1,15 +1,15 @@
-require 'formula'
-
 class Lzlib < Formula
-  homepage 'http://www.nongnu.org/lzip/lzlib.html'
-  url 'http://download.savannah.gnu.org/releases/lzip/lzlib-1.5.tar.gz'
-  sha1 'b89060b72c8357e0d0ca5198d48e97b5650a6d2c'
+  desc "Data compression library"
+  homepage "http://www.nongnu.org/lzip/lzlib.html"
+  url "http://download.savannah.gnu.org/releases/lzip/lzlib/lzlib-1.7.tar.gz"
+  sha256 "88c919dbb16a8b5409fc8ccec31d3c604551d73e84cec8c964fd639452536214"
 
   bottle do
-    cellar :any
-    sha1 "31e2cdf3e199f746189eefcd0a5c0fa4bc69caba" => :mavericks
-    sha1 "ca854e06e248bf072272ffd723484c4254e0bc89" => :mountain_lion
-    sha1 "4b2b4abb16165cb0931b3ed197851410a2c46684" => :lion
+    cellar :any_skip_relocation
+    sha256 "d1ee23db1e2ac1cfb5386808b42552f6d4e32c15cca856101f7fdaf08c2f3243" => :el_capitan
+    sha256 "6b849a8bee4d6c2d93e81c3a8397ef627533e29a2804509b3e6f0a5ce53c7447" => :yosemite
+    sha256 "15c49172418dcadf8d5d507a63cd30823b8c2c688da6b7f40ce0d212c9946838" => :mavericks
+    sha256 "48d3952ffe00f886b514a07f241a8a94f8950b977e032f1cf52600db4c09eb76" => :mountain_lion
   end
 
   def install
@@ -17,7 +17,7 @@ class Lzlib < Formula
                           "CC=#{ENV.cc}",
                           "CFLAGS=#{ENV.cflags}"
     system "make"
-    system "make check"
-    system "make install"
+    system "make", "check"
+    system "make", "install"
   end
 end
