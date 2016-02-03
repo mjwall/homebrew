@@ -1,15 +1,15 @@
 class Libbluray < Formula
   desc "Blu-Ray disc playback library for media players like VLC"
   homepage "https://www.videolan.org/developers/libbluray.html"
-  url "https://download.videolan.org/pub/videolan/libbluray/0.8.1/libbluray-0.8.1.tar.bz2"
-  sha256 "cdbec680c5bbc2251de6ccd109cf5f798ea51db6fcb938df39283be1799efb8f"
+  url "https://download.videolan.org/pub/videolan/libbluray/0.9.2/libbluray-0.9.2.tar.bz2"
+  sha256 "efc994f42d2bce6af2ce69d05ba89dbbd88bcec7aca065de094fb3a7880ce7ea"
+  revision 1
 
   bottle do
     cellar :any
-    revision 1
-    sha256 "721af230aeca4ac6e17c6799c7dbf73b8f7f14128983e1d0c3eaa8d6a80894b5" => :yosemite
-    sha256 "ebcaf7958d95d7e6a616f8146f0034a75d4e68a65f0a1b1d192eff0a88404df4" => :mavericks
-    sha256 "cc6ec61dfab7f26ba47ddd5195c109dbc1c1f28726dc48147ed7a00e5d207f82" => :mountain_lion
+    sha256 "f695851e0ca815f907a55f71a99f96e7819d79c40bb24a1ee0be635eca2ad1eb" => :el_capitan
+    sha256 "1e8a6176e026e1c32b2eb4942ebbfdcb3e6b923ac7924a985599cf0584c24a21" => :yosemite
+    sha256 "d9361e19dd6d272e2e655d499cd17a1aed9c3f6628eab90e3505fc1cb90f349a" => :mavericks
   end
 
   head do

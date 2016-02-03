@@ -1,14 +1,14 @@
 class Pypy < Formula
   desc "Implementation of Python 2 in Python"
   homepage "http://pypy.org/"
-  url "https://bitbucket.org/pypy/pypy/downloads/pypy-2.6.1-src.tar.bz2"
-  sha256 "7fddd414c9348c2f899f79ad86adc3fc2b19443855b5243f58487e1f0ac46560"
+  url "https://bitbucket.org/pypy/pypy/downloads/pypy-4.0.1-src.tar.bz2"
+  sha256 "29f5aa6ba17b34fd980e85172dfeb4086fdc373ad392b1feff2677d2d8aea23c"
 
   bottle do
     cellar :any
-    sha256 "8831be56c20ce1982359509dfc5059e0caefdd313dda5350eb13d2ea5237a973" => :yosemite
-    sha256 "6ba539560bad5331eff9172b858876e04cc2793f236e865495952aa48f921bf0" => :mavericks
-    sha256 "010f42ebb6352570c5b0268490d3cd931d0cb2f559cf59d53b7e29c29212f927" => :mountain_lion
+    sha256 "fc1f5dde107fd9887c49bfbbe6207db6623e162acae98786c4dc37d4c661753d" => :el_capitan
+    sha256 "a299cfdc148e56f982b4573482e589c62c7ae6630538db2d024c8076f0d9252a" => :yosemite
+    sha256 "80225ff2367f678288e2790cc0c265570209f41a2d2fc8f60655d7d5463a08fb" => :mavericks
   end
 
   depends_on :arch => :x86_64
@@ -28,13 +28,13 @@ class Pypy < Formula
   end
 
   resource "setuptools" do
-    url "https://pypi.python.org/packages/source/s/setuptools/setuptools-17.0.tar.gz"
-    sha256 "561b33819ef3da2bff89cc8b05fd9b5ea3caeb31ad588b53fdf06f886ac3d200"
+    url "https://pypi.python.org/packages/source/s/setuptools/setuptools-19.4.tar.gz"
+    sha256 "214bf29933f47cf25e6faa569f710731728a07a19cae91ea64f826051f68a8cf"
   end
 
   resource "pip" do
-    url "https://pypi.python.org/packages/source/p/pip/pip-7.0.1.tar.gz"
-    sha256 "cfec177552fdd0b2d12b72651c8e874f955b4c62c1c2c9f2588cbdc1c0d0d416"
+    url "https://pypi.python.org/packages/source/p/pip/pip-8.0.2.tar.gz"
+    sha256 "46f4bd0d8dfd51125a554568d646fe4200a3c2c6c36b9f2d06d2212148439521"
   end
 
   # https://bugs.launchpad.net/ubuntu/+source/gcc-4.2/+bug/187391
@@ -76,10 +76,6 @@ class Pypy < Formula
     # scripts will find it.
     bin.install_symlink libexec/"bin/pypy"
     lib.install_symlink libexec/"lib/libpypy-c.dylib"
-
-    %w[setuptools pip].each do |r|
-      (libexec/r).install resource(r)
-    end
   end
 
   def post_install
@@ -101,7 +97,7 @@ class Pypy < Formula
     EOF
 
     %w[setuptools pip].each do |pkg|
-      (libexec/pkg).cd do
+      resource(pkg).stage do
         system bin/"pypy", "-s", "setup.py", "--no-user-cfg", "install",
                "--force", "--verbose"
       end

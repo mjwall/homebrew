@@ -1,15 +1,15 @@
 class Awscli < Formula
   desc "Official Amazon AWS command-line interface"
   homepage "https://aws.amazon.com/cli/"
-  url "https://pypi.python.org/packages/source/a/awscli/awscli-1.8.3.tar.gz"
-  mirror "https://github.com/aws/aws-cli/archive/1.8.3.tar.gz"
-  sha256 "430124dce516e5466a290a8c9f6568185db18a15471f70b055b948218de50fe4"
+  url "https://pypi.python.org/packages/source/a/awscli/awscli-1.10.1.tar.gz"
+  mirror "https://github.com/aws/aws-cli/archive/1.10.1.tar.gz"
+  sha256 "6b738f7fc6af7ab9c759b7efb5decde71970990061b2df169b14bec89c452c95"
 
   bottle do
     cellar :any_skip_relocation
-    sha256 "f539651b54f1e4e483f594de333ce62665d67d3be49374d40921334789127b00" => :yosemite
-    sha256 "b2336e6f00de93485328daf4f6b5b82c6acda2de6011409f36c6494f1f22aebc" => :mavericks
-    sha256 "9d783865b1f27f08b59f134fc530520aed274aebcdbb909d434920cd45eeac0f" => :mountain_lion
+    sha256 "b9fb18aa7f4693780933959f8e6ac2cff4a68cd95c921cb950612024aded812b" => :el_capitan
+    sha256 "6ccdd59face0fa79bb94e527e3c12e64143ca131c282ef1de5dea18511c0a90b" => :yosemite
+    sha256 "76016e295cd2d8d67f8a1267ce763bd1b47010239902093c45e0f75b06f9149d" => :mavericks
   end
 
   head do
@@ -19,8 +19,7 @@ class Awscli < Formula
       url "https://github.com/boto/botocore.git", :branch => "develop"
     end
 
-    resource "bcdoc" do
-      url "https://github.com/boto/bcdoc.git", :branch => "develop"
+    resource "jmespath" do
       url "https://github.com/boto/jmespath.git", :branch => "develop"
     end
   end
@@ -30,8 +29,8 @@ class Awscli < Formula
   depends_on :python if MacOS.version <= :lion
 
   resource "six" do
-    url "https://pypi.python.org/packages/source/s/six/six-1.9.0.tar.gz"
-    sha256 "e24052411fc4fbd1f672635537c3fc2330d9481b18c0317695b46259512c91d5"
+    url "https://pypi.python.org/packages/source/s/six/six-1.10.0.tar.gz"
+    sha256 "105f8d68616f8248e24bf0e9372ef04d3cc10104f1980f54d57b2ce73a5ad56a"
   end
 
   resource "python-dateutil" do
@@ -45,13 +44,13 @@ class Awscli < Formula
   end
 
   resource "jmespath" do
-    url "https://pypi.python.org/packages/source/j/jmespath/jmespath-0.7.1.tar.gz"
-    sha256 "cd5a12ee3dfa470283a020a35e69e83b0700d44fe413014fd35ad5584c5f5fd1"
+    url "https://pypi.python.org/packages/source/j/jmespath/jmespath-0.9.0.tar.gz"
+    sha256 "08dfaa06d4397f283a01e57089f3360e3b52b5b9da91a70e1fd91e9f0cdd3d3d"
   end
 
   resource "botocore" do
-    url "https://pypi.python.org/packages/source/b/botocore/botocore-1.2.1.tar.gz"
-    sha256 "3e3f75a52355d0d6feda98d2dd3345605227104174b45bc028507f055a90dd28"
+    url "https://pypi.python.org/packages/source/b/botocore/botocore-1.3.23.tar.gz"
+    sha256 "d2e067bdb3e9b5c26821efc8517a9ced4f9d5f4cd30de14585ed1fe0eb552a02"
   end
 
   resource "docutils" do
@@ -59,19 +58,14 @@ class Awscli < Formula
     sha256 "c7db717810ab6965f66c8cf0398a98c9d8df982da39b4cd7f162911eb89596fa"
   end
 
-  resource "bcdoc" do
-    url "https://pypi.python.org/packages/source/b/bcdoc/bcdoc-0.16.0.tar.gz"
-    sha256 "f568c182e06883becf7196f227052435cffd45604700c82362ca77d3427b6202"
-  end
-
   resource "pyasn1" do
-    url "https://pypi.python.org/packages/source/p/pyasn1/pyasn1-0.1.8.tar.gz"
-    sha256 "5d33be7ca0ec5997d76d29ea4c33b65c00c0231407fff975199d7f40530b8347"
+    url "https://pypi.python.org/packages/source/p/pyasn1/pyasn1-0.1.9.tar.gz"
+    sha256 "853cacd96d1f701ddd67aa03ecc05f51890135b7262e922710112f12a2ed2a7f"
   end
 
   resource "rsa" do
-    url "https://pypi.python.org/packages/source/r/rsa/rsa-3.1.4.tar.gz"
-    sha256 "e2b0b05936c276b1edd2e1525553233b666df9e29b5c3ba223eed738277c82a0"
+    url "https://pypi.python.org/packages/source/r/rsa/rsa-3.2.3.tar.gz"
+    sha256 "14db288cc40d6339dedf60d7a47053ab004b4a8976a5c59402a211d8fc5bf21f"
   end
 
   def install
@@ -111,7 +105,7 @@ class Awscli < Formula
       aws configure
 
     More information:
-      http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html
+      https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html
     EOS
   end
 

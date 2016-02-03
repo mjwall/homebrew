@@ -190,13 +190,25 @@ module SharedEnvExtension
 
   # @private
   def userpaths!
-    paths = ORIGINAL_PATHS.map { |p| p.realpath.to_s rescue nil } - %w[/usr/X11/bin /opt/X11/bin]
-    self["PATH"] = paths.unshift(*self["PATH"].split(File::PATH_SEPARATOR)).uniq.join(File::PATH_SEPARATOR)
+    paths = self["PATH"].split(File::PATH_SEPARATOR)
+    # put Superenv.bin and opt path at the first
+    new_paths = paths.select { |p| p.start_with?("#{HOMEBREW_REPOSITORY}/Library/ENV") || p.start_with?("#{HOMEBREW_PREFIX}/opt") }
     # XXX hot fix to prefer brewed stuff (e.g. python) over /usr/bin.
-    prepend_path "PATH", HOMEBREW_PREFIX/"bin"
+    new_paths << "#{HOMEBREW_PREFIX}/bin"
+    # reset of self["PATH"]
+    new_paths += paths
+    # user paths
+    new_paths += ORIGINAL_PATHS.map { |p| p.realpath.to_s rescue nil } - %w[/usr/X11/bin /opt/X11/bin]
+    self["PATH"] = new_paths.uniq.join(File::PATH_SEPARATOR)
   end
 
   def fortran
+    # Ignore repeated calls to this function as it will misleadingly warn about
+    # building with an alternative Fortran compiler without optimization flags,
+    # despite it often being the Homebrew-provided one set up in the first call.
+    return if @fortran_setup_done
+    @fortran_setup_done = true
+
     flags = []
 
     if fc
@@ -232,6 +244,10 @@ module SharedEnvExtension
 
     flags.each { |key| self[key] = cflags }
     set_cpu_flags(flags)
+  end
+
+  def java_cache
+    append "_JAVA_OPTIONS", "-Duser.home=#{HOMEBREW_CACHE}/java_cache"
   end
 
   # ld64 is a newer linker provided for Xcode 2.5
@@ -298,6 +314,12 @@ module SharedEnvExtension
       else
         raise "Invalid value for #{source}: #{other}"
       end
+    end
+  end
+
+  def check_for_compiler_universal_support
+    if homebrew_cc =~ GNU_GCC_REGEXP
+      raise "Non-Apple GCC can't build universal binaries"
     end
   end
 end

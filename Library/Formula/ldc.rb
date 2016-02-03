@@ -1,22 +1,27 @@
 class Ldc < Formula
   desc "Portable D programming language compiler"
   homepage "http://wiki.dlang.org/LDC"
-  url "https://github.com/ldc-developers/ldc/releases/download/v0.15.2-beta2/ldc-0.15.2-beta2-src.tar.gz"
-  version "0.15.2-beta2"
-  sha256 "b421acbca0cdeef42c5af2bd53060253822dea6d78d216f973ee5e2b362723e2"
-
   head "https://github.com/ldc-developers/ldc.git", :shallow => false
 
+  stable do
+    url "https://github.com/ldc-developers/ldc/releases/download/v0.16.1/ldc-0.16.1-src.tar.gz"
+    sha256 "e66cea99f0b1406bbd265ad5fe6aa1412bae31ac86d8a678eb6751f304b6f95b"
+
+    # Fixes build errors in release mode, fixed in 0.17.0-beta2
+    patch :DATA
+  end
+
   bottle do
-    sha256 "42429da7c6b69babb33d17797492179faf584cee6a55980f5beba8c79d951c5a" => :yosemite
-    sha256 "0b9aaf9f9f5b8dc05a4a0989ce1d54bd81fe857e36d84d54dee0ba3cad008c09" => :mavericks
-    sha256 "8ea1ad6cbd93ca1b909fdce9ff136fe56ada447cd535840f2684088dcab0fea2" => :mountain_lion
+    revision 2
+    sha256 "628ca57025ff91d4bfb27f80831326baf96beed0fb491b8d3e309857f77b22b5" => :el_capitan
+    sha256 "b0cb0e8439f449c9962e2b697c247d4cff12bc0c7008108612188adc57bf2015" => :yosemite
+    sha256 "29ddf8baaf36667e624e31c88b5517d466446fc10d6d669f3923000b1355d38f" => :mavericks
   end
 
   devel do
-    url "https://github.com/ldc-developers/ldc/releases/download/v0.16.0-alpha2/ldc-0.16.0-alpha2-src.tar.gz"
-    version "0.16.0-alpha2"
-    sha256 "197c6cfdff9444dcea82255321f0da9d1017da9a7b1808eee75bc8793c926623"
+    url "https://github.com/ldc-developers/ldc/releases/download/v0.17.0-beta2/ldc-0.17.0-beta2-src.tar.gz"
+    sha256 "6d00b29928556f1220332a230dd743169c30f18333724254ac3f58244d98a6d7"
+    version "0.17.0-beta2"
   end
 
   needs :cxx11
@@ -50,3 +55,16 @@ class Ldc < Formula
     system "./test"
   end
 end
+__END__
+diff --git a/cmake/Modules/FindLLVM.cmake b/cmake/Modules/FindLLVM.cmake
+index a1a5118..fe9902e 100644
+--- a/cmake/Modules/FindLLVM.cmake
++++ b/cmake/Modules/FindLLVM.cmake
+@@ -151,6 +151,7 @@ else()
+     llvm_set(HOST_TARGET host-target)
+     llvm_set(INCLUDE_DIRS includedir true)
+     llvm_set(ROOT_DIR prefix true)
++    llvm_set(ENABLE_ASSERTIONS assertion-mode)
+
+     if(${LLVM_VERSION_STRING} MATCHES "^3\\.[0-2][\\.0-9A-Za-z]*")
+         # Versions below 3.3 do not support components objcarcopts, option

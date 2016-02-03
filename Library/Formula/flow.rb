@@ -1,16 +1,15 @@
 class Flow < Formula
   desc "Static type checker for JavaScript"
   homepage "http://flowtype.org/"
-  url "https://github.com/facebook/flow/archive/v0.15.0.tar.gz"
-  sha256 "4040b3dba2771904f5ce2e4f6fbe2052d452d0aca717bb571de92f4e9e91004c"
+  url "https://github.com/facebook/flow/archive/v0.21.0.tar.gz"
+  sha256 "6e367334193f4785da0c96bd1d82937a8336cd0f65bbaa2b8fcb8e6a2fcfe69f"
   head "https://github.com/facebook/flow.git"
 
   bottle do
     cellar :any_skip_relocation
-    sha256 "f31239cce34c4efe02b90135b07194843d2d5b37b01f43d943f6490c1be41ec1" => :el_capitan
-    sha256 "b0353dd4be1ede7d94a1af896ebf298fea283f59605377d69d396c7fd7de0cbe" => :yosemite
-    sha256 "98f3ed29075b0b3cc457dc722d7ad38f4ba9c84dd3a60df1e43d1afe29478428" => :mavericks
-    sha256 "6cc6fdcd50bfe4f39397902a1dbc31a65e242a4ca76cb918e395cd97d8d35eac" => :mountain_lion
+    sha256 "283956a19eea42c7a14fc1f19eb6f86ca54a9ffc908cc661e63449a403cc33d3" => :el_capitan
+    sha256 "c9091527f23d2d079984e5170e4b1016d752362e4f2a06b5b11a5740196955dd" => :yosemite
+    sha256 "243f97dc47f2ba5305899b45ec77cab398fa804b8424457c9c9bd61d4460b9ff" => :mavericks
   end
 
   depends_on "ocaml" => :build
@@ -24,12 +23,12 @@ class Flow < Formula
   end
 
   test do
-    system "#{bin}/flow init #{testpath}"
+    system "#{bin}/flow", "init", testpath
     (testpath/"test.js").write <<-EOS.undent
       /* @flow */
       var x: string = 123;
     EOS
     expected = /number\nThis type is incompatible with\n.*string\n\nFound 1 error/
-    assert_match expected, shell_output("#{bin}/flow check #{testpath}", 2)
+    assert_match expected, shell_output("#{bin}/flow check --old-output-format #{testpath}", 2)
   end
 end

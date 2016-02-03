@@ -3,6 +3,7 @@ $:.unshift File.expand_path("../lib", __FILE__)
 
 require "simplecov" if ENV["HOMEBREW_TESTS_COVERAGE"]
 require "global"
+require "formulary"
 
 # Test environment setup
 %w[ENV Formula].each { |d| HOMEBREW_LIBRARY.join(d).mkpath }
@@ -90,6 +91,10 @@ module Homebrew
 
     def mktmpdir(prefix_suffix = nil, &block)
       Dir.mktmpdir(prefix_suffix, HOMEBREW_TEMP, &block)
+    end
+
+    def needs_compat
+      skip "Requires compat/ code" if ENV["HOMEBREW_NO_COMPAT"]
     end
 
     def assert_nothing_raised

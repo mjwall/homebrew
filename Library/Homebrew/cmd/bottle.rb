@@ -32,6 +32,8 @@ BOTTLE_ERB = <<-EOS
   end
 EOS
 
+MAXIMUM_STRING_MATCHES = 100
+
 module Homebrew
   def keg_contains(string, keg, ignores)
     @put_string_exists_header, @put_filenames = nil
@@ -72,6 +74,8 @@ module Homebrew
         end
       end
 
+      text_matches = []
+
       # Use strings to search through the file for each string
       Utils.popen_read("strings", "-t", "x", "-", file.to_s) do |io|
         until io.eof?
@@ -82,11 +86,18 @@ module Homebrew
           next if linked_libraries.include? match # Don't bother reporting a string if it was found by otool
 
           result = true
+          text_matches << [match, offset]
+        end
+      end
 
-          if ARGV.verbose?
-            print_filename string, file
-            puts " #{Tty.gray}-->#{Tty.reset} match '#{match}' at offset #{Tty.em}0x#{offset}#{Tty.reset}"
-          end
+      if ARGV.verbose? && text_matches.any?
+        print_filename string, file
+        text_matches.first(MAXIMUM_STRING_MATCHES).each do |match, offset|
+          puts " #{Tty.gray}-->#{Tty.reset} match '#{match}' at offset #{Tty.em}0x#{offset}#{Tty.reset}"
+        end
+
+        if text_matches.size > MAXIMUM_STRING_MATCHES
+          puts "Only the first #{MAXIMUM_STRING_MATCHES} matches were output"
         end
       end
     end
@@ -134,6 +145,16 @@ module Homebrew
       return ofail "Formula not installed or up-to-date: #{f.full_name}"
     end
 
+    unless f.tap
+      return ofail "Formula not from core or any taps: #{f.full_name}"
+    end
+
+    if f.bottle_disabled?
+      ofail "Formula has disabled bottle: #{f.full_name}"
+      puts f.bottle_disable_reason
+      return
+    end
+
     unless built_as_bottle? f
       return ofail "Formula not installed with '--build-bottle': #{f.full_name}"
     end
@@ -157,6 +178,9 @@ module Homebrew
     filename = Bottle::Filename.create(f, bottle_tag, bottle_revision)
     bottle_path = Pathname.pwd/filename
 
+    tar_filename = filename.to_s.sub(/.gz$/, "")
+    tar_path = Pathname.pwd/tar_filename
+
     prefix = HOMEBREW_PREFIX.to_s
     cellar = HOMEBREW_CELLAR.to_s
 
@@ -167,18 +191,35 @@ module Homebrew
     skip_relocation = false
 
     keg.lock do
+      original_tab = nil
+
       begin
         keg.relocate_install_names prefix, Keg::PREFIX_PLACEHOLDER,
-          cellar, Keg::CELLAR_PLACEHOLDER, :keg_only => f.keg_only?
+          cellar, Keg::CELLAR_PLACEHOLDER
         keg.relocate_text_files prefix, Keg::PREFIX_PLACEHOLDER,
           cellar, Keg::CELLAR_PLACEHOLDER
 
         keg.delete_pyc_files!
 
+        Tab.clear_cache
+        tab = Tab.for_keg(keg)
+        original_tab = tab.dup
+        tab.poured_from_bottle = false
+        tab.HEAD = nil
+        tab.time = nil
+        tab.write
+
+        keg.find {|k| File.utime(File.atime(k), tab.source_modified_time, k) }
+
         cd cellar do
+          safe_system "tar", "cf", tar_path, "#{f.name}/#{f.pkg_version}"
+          File.utime(File.atime(tar_path), tab.source_modified_time, tar_path)
+          relocatable_tar_path = "#{f}-bottle.tar"
+          mv tar_path, relocatable_tar_path
           # Use gzip, faster to compress than bzip2, faster to uncompress than bzip2
           # or an uncompressed tarball (and more bandwidth friendly).
-          safe_system "tar", "czf", bottle_path, "#{f.name}/#{f.pkg_version}"
+          safe_system "gzip", "-f", relocatable_tar_path
+          mv "#{relocatable_tar_path}.gz", bottle_path
         end
 
         if bottle_path.size > 1*1024*1024
@@ -205,8 +246,11 @@ module Homebrew
         raise
       ensure
         ignore_interrupts do
+          original_tab.write
           keg.relocate_install_names Keg::PREFIX_PLACEHOLDER, prefix,
-            Keg::CELLAR_PLACEHOLDER, cellar, :keg_only => f.keg_only?
+            Keg::CELLAR_PLACEHOLDER, cellar
+          keg.relocate_text_files Keg::PREFIX_PLACEHOLDER, prefix,
+            Keg::CELLAR_PLACEHOLDER, cellar
         end
       end
     end
@@ -277,6 +321,12 @@ module Homebrew
       ohai formula_name
       f = Formulary.factory(formula_name)
 
+      if f.bottle_disabled?
+        ofail "Formula #{f.full_name} has disabled bottle"
+        puts f.bottle_disable_reason
+        next
+      end
+
       bottle = if keep_old
         f.bottle_specification.dup
       else
@@ -316,15 +366,15 @@ module Homebrew
             else
               string = s.sub!(
                 /(
-                  \ {2}(                                                              # two spaces at the beginning
-                    url\ ['"][\S\ ]+['"]                                              # url with a string
+                  \ {2}(                                                         # two spaces at the beginning
+                    (url|head)\ ['"][\S\ ]+['"]                                  # url or head with a string
                     (
-                      ,[\S\ ]*$                                                       # url may have options
-                      (\n^\ {3}[\S\ ]+$)*                                             # options can be in multiple lines
+                      ,[\S\ ]*$                                                  # url may have options
+                      (\n^\ {3}[\S\ ]+$)*                                        # options can be in multiple lines
                     )?|
-                    (homepage|desc|sha1|sha256|head|version|mirror)\ ['"][\S\ ]+['"]| # specs with a string
-                    revision\ \d+                                                     # revision with a number
-                  )\n+                                                                # multiple empty lines
+                    (homepage|desc|sha1|sha256|version|mirror)\ ['"][\S\ ]+['"]| # specs with a string
+                    revision\ \d+                                                # revision with a number
+                  )\n+                                                           # multiple empty lines
                  )+
                /mx, '\0' + output + "\n")
             end
@@ -332,10 +382,12 @@ module Homebrew
           end
         end
 
-        HOMEBREW_REPOSITORY.cd do
-          safe_system "git", "commit", "--no-edit", "--verbose",
-            "--message=#{f.name}: #{update_or_add} #{f.pkg_version} bottle.",
-            "--", f.path
+        unless ARGV.include? "--no-commit"
+          f.path.parent.cd do
+            safe_system "git", "commit", "--no-edit", "--verbose",
+              "--message=#{f.name}: #{update_or_add} #{f.pkg_version} bottle.",
+              "--", f.path
+          end
         end
       end
     end

@@ -5,14 +5,14 @@ class Idris < Formula
 
   desc "Pure functional programming language with dependent types"
   homepage "http://www.idris-lang.org"
-  url "https://github.com/idris-lang/Idris-dev/archive/v0.9.19.tar.gz"
-  sha256 "c9f73dcc61a8e24c56a13cf4397ea76ff1f0bf3d0d1004e92f972872aa73f1fd"
+  url "https://github.com/idris-lang/Idris-dev/archive/v0.10.tar.gz"
+  sha256 "7c3d862bf1de5f9acbd13ea4ec4947933d6dd09abb82af62e1ae7234c130851a"
   head "https://github.com/idris-lang/Idris-dev.git"
 
   bottle do
-    sha256 "05c45c28de89c39f9aee8300955622dd4e88373c1f0511be754782d60be4dedc" => :yosemite
-    sha256 "2f8f3dad3067f4efaeb2a6d43370e2e67325cf3b9d66042fb5f5fff60711227b" => :mavericks
-    sha256 "ec33fd58674dd8cb7557cd2f72bf0a90a105cdc4f4f8459520ff46014a15426b" => :mountain_lion
+    sha256 "f98fd8a486f8055d5b92413e510c9d13276de50df2962e24d6180f8a3a3b8cd0" => :el_capitan
+    sha256 "50b2ce881aadb6fddf6bb656c770cdeae40fc7dacb9b7e63ea1aeb8b25d50040" => :yosemite
+    sha256 "546f7ee78700c0b42f35677244c801320c9cd908a1c12e846dcb2f8d3aeaf3b1" => :mavericks
   end
 
   depends_on "ghc" => :build
@@ -22,13 +22,11 @@ class Idris < Formula
   depends_on "libffi" => :recommended
   depends_on "pkg-config" => :build if build.with? "libffi"
 
-  setup_ghc_compilers
-
   def install
-    flags = []
-    flags << "-f FFI" if build.with? "libffi"
-    flags << "-f release" if build.stable?
-    install_cabal_package flags
+    args = []
+    args << "-f FFI" if build.with? "libffi"
+    args << "-f release" if build.stable?
+    install_cabal_package *args
   end
 
   test do
@@ -37,13 +35,22 @@ class Idris < Formula
       main : IO ()
       main = putStrLn "Hello, Homebrew!"
     EOS
+
+    (testpath/"ffi.idr").write <<-EOS.undent
+      module Main
+      puts: String -> IO ()
+      puts x = foreign FFI_C "puts" (String -> IO ()) x
+
+      main : IO ()
+      main = puts "Hello, interpreter!"
+    EOS
     shell_output "#{bin}/idris #{testpath}/hello.idr -o #{testpath}/hello"
     result = shell_output "#{testpath}/hello"
     assert_match /Hello, Homebrew!/, result
 
     if build.with? "libffi"
-      cmd = "#{bin}/idris --exec 'putStrLn {ffi=FFI_C} \"Hello, interpreter!\"'"
-      result = shell_output cmd
+      shell_output "#{bin}/idris #{testpath}/ffi.idr -o #{testpath}/ffi"
+      result = shell_output "#{testpath}/ffi"
       assert_match /Hello, interpreter!/, result
     end
   end

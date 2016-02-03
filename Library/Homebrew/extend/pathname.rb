@@ -1,12 +1,51 @@
 require "pathname"
-require "mach"
 require "resource"
 require "metafiles"
+require "utils"
+
+module DiskUsageExtension
+  def disk_usage
+    return @disk_usage if @disk_usage
+    compute_disk_usage
+    @disk_usage
+  end
+
+  def file_count
+    return @file_count if @file_count
+    compute_disk_usage
+    @file_count
+  end
+
+  def abv
+    out = ""
+    compute_disk_usage
+    out << "#{number_readable(@file_count)} files, " if @file_count > 1
+    out << "#{disk_usage_readable(@disk_usage)}"
+  end
+
+  private
+
+  def compute_disk_usage
+    if directory?
+      @file_count = 0
+      @disk_usage = 0
+      find do |f|
+        if !f.directory? && !f.symlink? && f.basename.to_s != ".DS_Store"
+          @file_count += 1
+          @disk_usage += f.size
+        end
+      end
+    else
+      @file_count = 1
+      @disk_usage = size
+    end
+  end
+end
 
 # Homebrew extends Ruby's `Pathname` to make our code more readable.
 # @see http://ruby-doc.org/stdlib-1.8.7/libdoc/pathname/rdoc/Pathname.html  Ruby's Pathname API
 class Pathname
-  include MachO
+  include DiskUsageExtension
 
   # @private
   BOTTLE_EXTNAME_RX = /(\.[a-z0-9_]+\.bottle\.(\d+\.)?tar\.gz)$/
@@ -139,17 +178,6 @@ class Pathname
   private :default_stat
 
   # @private
-  def cp(dst)
-    opoo "Pathname#cp is deprecated, use FileUtils.cp"
-    if file?
-      FileUtils.cp to_s, dst
-    else
-      FileUtils.cp_r to_s, dst
-    end
-    dst
-  end
-
-  # @private
   def cp_path_sub(pattern, replacement)
     raise "#{self} does not exist" unless self.exist?
 
@@ -199,13 +227,6 @@ class Pathname
     end
   rescue Errno::EACCES, Errno::ENOENT
     false
-  end
-
-  # @private
-  def chmod_R(perms)
-    opoo "Pathname#chmod_R is deprecated, use FileUtils.chmod_R"
-    require "fileutils"
-    FileUtils.chmod_R perms, to_s
   end
 
   # @private
@@ -413,17 +434,6 @@ class Pathname
     end
   end
 
-  # @private
-  def abv
-    out = ""
-    n = Utils.popen_read("find", expand_path.to_s, "-type", "f", "!", "-name", ".DS_Store").split("\n").size
-    out << "#{n} files, " if n > 1
-    size = Utils.popen_read("/usr/bin/du", "-hs", expand_path.to_s).split("\t")[0]
-    size ||= "0B"
-    out << size.strip
-    out
-  end
-
   # We redefine these private methods in order to add the /o modifier to
   # the Regexp literals, which forces string interpolation to happen only
   # once instead of each time the method is called. This is fixed in 1.9+.
@@ -473,6 +483,7 @@ module ObserverPathnameExtension
 
     def reset_counts!
       @n = @d = 0
+      @put_verbose_trimmed_warning = false
     end
 
     def total
@@ -482,33 +493,50 @@ module ObserverPathnameExtension
     def counts
       [n, d]
     end
+
+    MAXIMUM_VERBOSE_OUTPUT = 100
+
+    def verbose?
+      return ARGV.verbose? unless ENV["TRAVIS"]
+      return false unless ARGV.verbose?
+
+      if total < MAXIMUM_VERBOSE_OUTPUT
+        true
+      else
+        unless @put_verbose_trimmed_warning
+          puts "Only the first #{MAXIMUM_VERBOSE_OUTPUT} operations were output."
+          @put_verbose_trimmed_warning = true
+        end
+        false
+      end
+    end
   end
 
   def unlink
     super
-    puts "rm #{self}" if ARGV.verbose?
+    puts "rm #{self}" if ObserverPathnameExtension.verbose?
     ObserverPathnameExtension.n += 1
   end
 
   def rmdir
     super
-    puts "rmdir #{self}" if ARGV.verbose?
+    puts "rmdir #{self}" if ObserverPathnameExtension.verbose?
     ObserverPathnameExtension.d += 1
   end
 
   def make_relative_symlink(src)
     super
-    puts "ln -s #{src.relative_path_from(dirname)} #{basename}" if ARGV.verbose?
+    puts "ln -s #{src.relative_path_from(dirname)} #{basename}" if ObserverPathnameExtension.verbose?
     ObserverPathnameExtension.n += 1
   end
 
   def install_info
     super
-    puts "info #{self}" if ARGV.verbose?
+    puts "info #{self}" if ObserverPathnameExtension.verbose?
   end
 
   def uninstall_info
     super
-    puts "uninfo #{self}" if ARGV.verbose?
+    puts "uninfo #{self}" if ObserverPathnameExtension.verbose?
   end
 end

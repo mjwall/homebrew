@@ -2,16 +2,14 @@ class Python < Formula
   desc "Interpreted, interactive, object-oriented programming language"
   homepage "https://www.python.org"
   head "https://hg.python.org/cpython", :using => :hg, :branch => "2.7"
-  url "https://www.python.org/ftp/python/2.7.10/Python-2.7.10.tgz"
-  sha256 "eda8ce6eec03e74991abb5384170e7c65fcd7522e409b8e83d7e6372add0f12a"
-  revision 2
+  url "https://www.python.org/ftp/python/2.7.11/Python-2.7.11.tgz"
+  sha256 "82929b96fd6afc8da838b149107078c02fa1744b7e60999a8babbc0d3fa86fc6"
 
   bottle do
-    revision 1
-    sha256 "2d3c8c00a73c02b9a04f26d0d5593345a9a6b684f63e12d6275b852ed68d289a" => :el_capitan
-    sha256 "ac383ea391d1de31b7e5a1491e1afe0c9163bdc792518fe75d14fe7392f754a0" => :yosemite
-    sha256 "5729d27d9c232386d686732c8fb89f20235abaebb9315da6d438e44e05f04c9a" => :mavericks
-    sha256 "c359a92945b76ccf6e7e3ee3711befcb92138016e44f68351cedd984e5949eeb" => :mountain_lion
+    revision 2
+    sha256 "990c30084e9c55ee708db3f2a5f15984dc44406473002ef97c11b183566abacb" => :el_capitan
+    sha256 "301c5cef9bc3b8afc6e4a35b92f75739eecae0a9407f8ee39d3af83ce5425f2f" => :yosemite
+    sha256 "f9c35b48fd15a35b1ac69f36deff4f403e4839ca8f6a8b7fe2311da8c17397c3" => :mavericks
   end
 
   # Please don't add a wide/ucs4 option as it won't be accepted.
@@ -37,18 +35,18 @@ class Python < Formula
   skip_clean "bin/easy_install", "bin/easy_install-2.7"
 
   resource "setuptools" do
-    url "https://pypi.python.org/packages/source/s/setuptools/setuptools-18.3.1.tar.gz"
-    sha256 "2fa230727104b07e522deec17929e84e041c9047e392c055347a02b0d5ca874d"
+    url "https://pypi.python.org/packages/source/s/setuptools/setuptools-19.4.tar.gz"
+    sha256 "214bf29933f47cf25e6faa569f710731728a07a19cae91ea64f826051f68a8cf"
   end
 
   resource "pip" do
-    url "https://pypi.python.org/packages/source/p/pip/pip-7.1.2.tar.gz"
-    sha256 "ca047986f0528cfa975a14fb9f7f106271d4e0c3fe1ddced6c1db2e7ae57a477"
+    url "https://pypi.python.org/packages/source/p/pip/pip-8.0.2.tar.gz"
+    sha256 "46f4bd0d8dfd51125a554568d646fe4200a3c2c6c36b9f2d06d2212148439521"
   end
 
   resource "wheel" do
-    url "https://pypi.python.org/packages/source/w/wheel/wheel-0.24.0.tar.gz"
-    sha256 "ef832abfedea7ed86b6eae7400128f88053a1da81a37c00613b1279544d585aa"
+    url "https://pypi.python.org/packages/source/w/wheel/wheel-0.26.0.tar.gz"
+    sha256 "eaad353805c180a47545a256e6508835b65a8e830ba1093ed8162f19a50a530c"
   end
 
   # Patch for pyport.h macro issue
@@ -62,6 +60,14 @@ class Python < Formula
   # Patch to disable the search for Tk.framework, since Homebrew's Tk is
   # a plain unix build. Remove `-lX11`, too because our Tk is "AquaTk".
   patch :DATA if build.with? "tcl-tk"
+
+  # Fix extension module builds against Xcode 7 SDKs
+  # https://github.com/Homebrew/homebrew/issues/41085
+  # https://bugs.python.org/issue25136
+  patch do
+    url "https://bugs.python.org/file40479/xcode-stubs-2.7.patch"
+    sha256 "86714b750c887065952cd556f4d23246edf3124384f579356c8e377bc6ff2f83"
+  end
 
   def lib_cellar
     prefix/"Frameworks/Python.framework/Versions/2.7/lib/python2.7"
@@ -103,18 +109,20 @@ class Python < Formula
 
     args << "--without-gcc" if ENV.compiler == :clang
 
+    cflags   = []
+    ldflags  = []
+    cppflags = []
+
     unless MacOS::CLT.installed?
       # Help Python's build system (setuptools/pip) to build things on Xcode-only systems
       # The setup.py looks at "-isysroot" to get the sysroot (and not at --sysroot)
-      cflags = "CFLAGS=-isysroot #{MacOS.sdk_path}"
-      ldflags = "LDFLAGS=-isysroot #{MacOS.sdk_path}"
-      args << "CPPFLAGS=-I#{MacOS.sdk_path}/usr/include" # find zlib
+      cflags   << "-isysroot #{MacOS.sdk_path}"
+      ldflags  << "-isysroot #{MacOS.sdk_path}"
+      cppflags << "-I#{MacOS.sdk_path}/usr/include" # find zlib
       # For the Xlib.h, Python needs this header dir with the system Tk
       if build.without? "tcl-tk"
-        cflags += " -I#{MacOS.sdk_path}/System/Library/Frameworks/Tk.framework/Versions/8.5/Headers"
+        cflags << "-I#{MacOS.sdk_path}/System/Library/Frameworks/Tk.framework/Versions/8.5/Headers"
       end
-      args << cflags
-      args << ldflags
     end
 
     # Avoid linking to libgcc https://code.activestate.com/lists/python-dev/112195/
@@ -150,9 +158,13 @@ class Python < Formula
 
     if build.with? "tcl-tk"
       tcl_tk = Formula["homebrew/dupes/tcl-tk"].opt_prefix
-      ENV.append "CPPFLAGS", "-I#{tcl_tk}/include"
-      ENV.append "LDFLAGS", "-L#{tcl_tk}/lib"
+      cppflags << "-I#{tcl_tk}/include"
+      ldflags  << "-L#{tcl_tk}/lib"
     end
+
+    args << "CFLAGS=#{cflags.join(" ")}" unless cflags.empty?
+    args << "LDFLAGS=#{ldflags.join(" ")}" unless ldflags.empty?
+    args << "CPPFLAGS=#{cppflags.join(" ")}" unless cppflags.empty?
 
     system "./configure", *args
 
@@ -170,7 +182,7 @@ class Python < Formula
     system "make", "install", "PYTHONAPPSDIR=#{prefix}"
     # Demos and Tools
     system "make", "frameworkinstallextras", "PYTHONAPPSDIR=#{share}/python"
-    system "make", "quicktest" if build.include? "quicktest"
+    system "make", "quicktest" if build.with? "quicktest"
 
     # Symlink the pkgconfig files into HOMEBREW_PREFIX so they're accessible.
     (lib/"pkgconfig").install_symlink Dir["#{frameworks}/Python.framework/Versions/Current/lib/pkgconfig/*"]

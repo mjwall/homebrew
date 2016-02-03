@@ -1,21 +1,18 @@
 class Mysql < Formula
   desc "Open source relational database management system"
-  homepage "https://dev.mysql.com/doc/refman/5.6/en/"
-  url "https://cdn.mysql.com/Downloads/MySQL-5.6/mysql-5.6.26.tar.gz"
-  sha256 "b44c6ce5f95172c56c73edfa8b710b39242ec7af0ab182c040208c41866e5070"
+  homepage "https://dev.mysql.com/doc/refman/5.7/en/"
+  url "https://cdn.mysql.com/Downloads/MySQL-5.7/mysql-5.7.10.tar.gz"
+  sha256 "1ea1644884d086a23eafd8ccb04d517fbd43da3a6a06036f23c5c3a111e25c74"
 
   bottle do
-    sha256 "fae4e0791575b643c0f7f3c0368a4fdbafb7d00c03f41431fff25dbbfa83b4cc" => :yosemite
-    sha256 "954769ebb859807b570bf09268b37e470891cbf2dceebd8ef6c92d8f36baf15d" => :mavericks
-    sha256 "b05421d5f0c0b160c605fa6f19986555e485b0504cec77febca74ec4ebd499e1" => :mountain_lion
+    revision 3
+    sha256 "5db059f6501b15872ea92d98e6655f14a9f7ad7e48e9e4a0ac17b8ea31c2517b" => :el_capitan
+    sha256 "85a9fff98591aa6f9561604e45cdd3c4bdcb06331f796ec60bd2d2292611183c" => :yosemite
+    sha256 "0b3ac6a171ae488bf38f14d5e0b4b51fbbf91f1f63a6407c770bd620bfc0537b" => :mavericks
   end
 
-  depends_on "cmake" => :build
-  depends_on "pidof" unless MacOS.version >= :mountain_lion
-  depends_on "openssl"
-
   option :universal
-  option "with-tests", "Build with unit tests"
+  option "with-test", "Build with unit tests"
   option "with-embedded", "Build the embedded server"
   option "with-archive-storage-engine", "Compile with the ARCHIVE storage engine enabled"
   option "with-blackhole-storage-engine", "Compile with the BLACKHOLE storage engine enabled"
@@ -26,15 +23,27 @@ class Mysql < Formula
   deprecated_option "enable-local-infile" => "with-local-infile"
   deprecated_option "enable-memcached" => "with-memcached"
   deprecated_option "enable-debug" => "with-debug"
+  deprecated_option "with-tests" => "with-test"
+
+  depends_on "cmake" => :build
+  depends_on "pidof" unless MacOS.version >= :mountain_lion
+  depends_on "openssl"
 
   conflicts_with "mysql-cluster", "mariadb", "percona-server",
     :because => "mysql, mariadb, and percona install the same binaries."
   conflicts_with "mysql-connector-c",
     :because => "both install MySQL client libraries"
+  conflicts_with "mariadb-connector-c",
+    :because => "both install plugins"
 
   fails_with :llvm do
     build 2326
     cause "https://github.com/Homebrew/homebrew/issues/issue/144"
+  end
+
+  resource "boost" do
+    url "https://downloads.sourceforge.net/project/boost/boost/1.59.0/boost_1_59_0.tar.bz2"
+    sha256 "727a932322d94287b62abb1bd2d41723eec4356a7728909e38adb65ca25241ca"
   end
 
   def datadir
@@ -73,8 +82,14 @@ class Mysql < Formula
       -DWITH_EDITLINE=system
     ]
 
+    # MySQL >5.7.x mandates Boost as a requirement to build & has a strict
+    # version check in place to ensure it only builds against expected release.
+    # This is problematic when Boost releases don't align with MySQL releases.
+    (buildpath/"boost_1_59_0").install resource("boost")
+    args << "-DWITH_BOOST=#{buildpath}/boost_1_59_0"
+
     # To enable unit testing at build, we need to download the unit testing suite
-    if build.with? "tests"
+    if build.with? "test"
       args << "-DENABLE_DOWNLOADS=ON"
     else
       args << "-DWITH_UNIT_TESTS=OFF"
@@ -112,7 +127,10 @@ class Mysql < Formula
     # See: https://github.com/Homebrew/homebrew/issues/4975
     rm_rf prefix/"data"
 
-    # Link the setup script into bin
+    # Perl script was removed in 5.7.9 so install C++ binary instead.
+    # Binary is deprecated & will be removed in future upstream
+    # update but is still required for mysql-test-run to pass in test.
+    (prefix/"scripts").install "client/mysql_install_db"
     bin.install_symlink prefix/"scripts/mysql_install_db"
 
     # Fix up the control script and link into bin
@@ -123,9 +141,6 @@ class Mysql < Formula
     end
 
     bin.install_symlink prefix/"support-files/mysql.server"
-
-    libexec.install bin/"mysqlaccess"
-    libexec.install bin/"mysqlaccess.conf"
   end
 
   def post_install
@@ -133,18 +148,27 @@ class Mysql < Formula
     datadir.mkpath
     unless (datadir/"mysql/user.frm").exist?
       ENV["TMPDIR"] = nil
-      system bin/"mysql_install_db", "--verbose", "--user=#{ENV["USER"]}",
+      system bin/"mysqld", "--initialize-insecure", "--user=#{ENV["USER"]}",
         "--basedir=#{prefix}", "--datadir=#{datadir}", "--tmpdir=/tmp"
     end
   end
 
-  def caveats; <<-EOS.undent
-    A "/etc/my.cnf" from another install may interfere with a Homebrew-built
-    server starting up correctly.
+  def caveats
+    s = <<-EOS.undent
+    We've installed your MySQL database without a root password. To secure it run:
+        mysql_secure_installation
 
-    To connect:
+    To connect run:
         mysql -uroot
     EOS
+    if File.exist? "/etc/my.cnf"
+      s += <<-EOS.undent
+
+        A "/etc/my.cnf" from another install may interfere with a Homebrew-built
+        server starting up correctly.
+      EOS
+    end
+    s
   end
 
   plist_options :manual => "mysql.server start"

@@ -1,4 +1,5 @@
 require "formula"
+require "formula_versions"
 require "utils"
 require "extend/ENV"
 require "formula_cellar_checks"
@@ -14,9 +15,9 @@ module Homebrew
     problem_count = 0
 
     strict = ARGV.include? "--strict"
-    if strict && ARGV.formulae.any? && MacOS.version >= :mavericks
+    if strict && ARGV.resolved_formulae.any? && RUBY_VERSION.split(".").first.to_i >= 2
       require "cmd/style"
-      ohai "brew style #{ARGV.formulae.join " "}"
+      ohai "brew style #{ARGV.resolved_formulae.join " "}"
       style
     end
 
@@ -48,7 +49,7 @@ module Homebrew
     ff = if ARGV.named.empty?
       Formula
     else
-      ARGV.formulae
+      ARGV.resolved_formulae
     end
 
     output_header = !strict
@@ -121,12 +122,14 @@ class FormulaAuditor
     boost-build
     bsdmake
     cmake
+    godep
     imake
     intltool
     libtool
     pkg-config
     scons
     smake
+    sphinx-doc
     swig
   ]
 
@@ -142,8 +145,14 @@ class FormulaAuditor
   end
 
   def audit_file
-    unless formula.path.stat.mode == 0100644
-      problem "Incorrect file permissions: chmod 644 #{formula.path}"
+    # Under normal circumstances (umask 0022), we expect a file mode of 644. If
+    # the user's umask is more restrictive, respect that by masking out the
+    # corresponding bits. (The also included 0100000 flag means regular file.)
+    wanted_mode = 0100644 & ~File.umask
+    actual_mode = formula.path.stat.mode
+    unless actual_mode == wanted_mode
+      problem format("Incorrect file permissions (%03o): chmod %03o %s",
+                     actual_mode & 0777, wanted_mode & 0777, formula.path)
     end
 
     if text.has_DATA? && !text.has_END?
@@ -167,26 +176,45 @@ class FormulaAuditor
       [/^  mirror ["'][\S\ ]+["']/,        "mirror"],
       [/^  version ["'][\S\ ]+["']/,       "version"],
       [/^  (sha1|sha256) ["'][\S\ ]+["']/, "checksum"],
+      [/^  revision/,                      "revision"],
       [/^  head ["'][\S\ ]+["']/,          "head"],
       [/^  stable do/,                     "stable block"],
       [/^  bottle do/,                     "bottle block"],
       [/^  devel do/,                      "devel block"],
       [/^  head do/,                       "head block"],
+      [/^  bottle (:unneeded|:disable)/,   "bottle modifier"],
+      [/^  keg_only/,                      "keg_only"],
       [/^  option/,                        "option"],
       [/^  depends_on/,                    "depends_on"],
+      [/^  (go_)?resource/,                "resource"],
       [/^  def install/,                   "install method"],
       [/^  def caveats/,                   "caveats method"],
-      [/^  test do/,                       "test block"]
+      [/^  test do/,                       "test block"],
     ]
 
-    component_list.map do |regex, name|
+    present = component_list.map do |regex, name|
       lineno = text.line_number regex
       next unless lineno
       [lineno, name]
-    end.compact.each_cons(2) do |c1, c2|
+    end.compact
+    present.each_cons(2) do |c1, c2|
       unless c1[0] < c2[0]
         problem "`#{c1[1]}` (line #{c1[0]}) should be put before `#{c2[1]}` (line #{c2[0]})"
       end
+    end
+    present.map!(&:last)
+    if present.include?("stable block")
+      %w[url checksum mirror].each do |component|
+        if present.include?(component)
+          problem "`#{component}` should be put inside `stable block`"
+        end
+      end
+    end
+    if present.include?("head") && present.include?("head block")
+      problem "Should not have both `head` and `head do`"
+    end
+    if present.include?("bottle modifier") && present.include?("bottle block")
+      problem "Should not have `bottle :unneeded/:disable` and `bottle do`"
     end
   end
 
@@ -197,17 +225,12 @@ class FormulaAuditor
       end
     end
 
-    if Object.const_defined?("GithubGistFormula") && formula.class < GithubGistFormula
-      problem "GithubGistFormula is deprecated, use Formula instead"
+    classes = %w[GithubGistFormula ScriptFileFormula AmazonWebServicesFormula]
+    klass = classes.find do |c|
+      Object.const_defined?(c) && formula.class < Object.const_get(c)
     end
 
-    if Object.const_defined?("ScriptFileFormula") && formula.class < ScriptFileFormula
-      problem "ScriptFileFormula is deprecated, use Formula instead"
-    end
-
-    if Object.const_defined?("AmazonWebServicesFormula") && formula.class < AmazonWebServicesFormula
-      problem "AmazonWebServicesFormula is deprecated, use Formula instead"
-    end
+    problem "#{klass} is deprecated, use Formula instead" if klass
   end
 
   # core aliases + tap alias names + tap alias full name
@@ -216,7 +239,7 @@ class FormulaAuditor
   def audit_formula_name
     return unless @strict
     # skip for non-official taps
-    return if !formula.core_formula? && !formula.tap.to_s.start_with?("homebrew")
+    return if formula.tap.nil? || !formula.tap.official?
 
     name = formula.name
     full_name = formula.full_name
@@ -226,8 +249,8 @@ class FormulaAuditor
       return
     end
 
-    if FORMULA_RENAMES.key? name
-      problem "'#{name}' is reserved as the old name of #{FORMULA_RENAMES[name]}"
+    if oldname = CoreFormulaRepository.instance.formula_renames[name]
+      problem "'#{name}' is reserved as the old name of #{oldname}"
       return
     end
 
@@ -277,10 +300,13 @@ class FormulaAuditor
         rescue TapFormulaAmbiguityError
           problem "Ambiguous dependency #{dep.name.inspect}."
           next
+        rescue TapFormulaWithOldnameAmbiguityError
+          problem "Ambiguous oldname dependency #{dep.name.inspect}."
+          next
         end
 
-        if FORMULA_RENAMES[dep.name] == dep_f.name
-          problem "Dependency '#{dep.name}' was renamed; use newname '#{dep_f.name}'."
+        if dep_f.oldname && dep.name.split("/").last == dep_f.oldname
+          problem "Dependency '#{dep.name}' was renamed; use new name '#{dep_f.name}'."
         end
 
         if @@aliases.include?(dep.name)
@@ -338,7 +364,7 @@ class FormulaAuditor
         next
       rescue FormulaUnavailableError
         problem "Can't find conflicting formula #{c.name.inspect}."
-      rescue TapFormulaAmbiguityError
+      rescue TapFormulaAmbiguityError, TapFormulaWithOldnameAmbiguityError
         problem "Ambiguous conflicting formula #{c.name.inspect}."
       end
     end
@@ -349,6 +375,10 @@ class FormulaAuditor
       next unless @strict
       if o.name !~ /with(out)?-/ && o.name != "c++11" && o.name != "universal" && o.name != "32-bit"
         problem "Options should begin with with/without. Migrate '--#{o.name}' with `deprecated_option`."
+      end
+
+      if o.name =~ /^with(out)?-(?:checks?|tests)$/
+        problem "Use '--with#{$1}-test' instead of '--#{o.name}'. Migrate '--#{o.name}' with `deprecated_option`."
       end
     end
   end
@@ -378,7 +408,11 @@ class FormulaAuditor
     end
 
     if desc =~ /^([Aa]n?)\s/
-      problem "Please remove the indefinite article \"#{$1}\" from the beginning of the description"
+      problem "Description shouldn't start with an indefinite article (#{$1})"
+    end
+
+    if desc.downcase.start_with? "#{formula.name} "
+      problem "Description shouldn't include the formula name"
     end
   end
 
@@ -455,6 +489,12 @@ class FormulaAuditor
     end
   end
 
+  def audit_bottle_spec
+    if formula.bottle_disabled? && !formula.bottle_disable_reason.valid?
+      problem "Unrecognized bottle modifier"
+    end
+  end
+
   def audit_github_repository
     return unless @online
 
@@ -472,7 +512,7 @@ class FormulaAuditor
     end
 
     problem "GitHub fork (not canonical repository)" if metadata["fork"]
-    if (metadata["forks_count"] < 10) && (metadata["watchers_count"] < 10) &&
+    if (metadata["forks_count"] < 10) && (metadata["subscribers_count"] < 10) &&
        (metadata["stargazers_count"] < 20)
       problem "GitHub repository not notable enough (<10 forks, <10 watchers and <20 stars)"
     end
@@ -526,10 +566,31 @@ class FormulaAuditor
     stable = formula.stable
     case stable && stable.url
     when %r{download\.gnome\.org/sources}, %r{ftp\.gnome\.org/pub/GNOME/sources}i
-      minor_version = Version.parse(stable.url).to_s.split(".", 3)[1].to_i
+      version = Version.parse(stable.url)
+      if version >= Version.new("1.0")
+        minor_version = version.to_s.split(".", 3)[1].to_i
+        if minor_version.odd?
+          problem "#{stable.version} is a development release"
+        end
+      end
+    end
+  end
 
-      if minor_version.odd?
-        problem "#{stable.version} is a development release"
+  def audit_revision
+    return unless formula.tap # skip formula not from core or any taps
+    return unless formula.tap.git? # git log is required
+
+    fv = FormulaVersions.new(formula, :max_depth => 10)
+    revision_map = fv.revision_map("origin/master")
+    if (revisions = revision_map[formula.version]).any?
+      problem "revision should not decrease" if formula.revision < revisions.max
+    elsif formula.revision != 0
+      if formula.stable
+        if revision_map[formula.stable.version].empty? # check stable spec
+          problem "revision should be removed"
+        end
+      else # head/devel-only formula
+        problem "revision should be removed"
       end
     end
   end
@@ -576,7 +637,7 @@ class FormulaAuditor
       problem "\"Formula.factory(name)\" is deprecated in favor of \"Formula[name]\""
     end
 
-    if text =~ /system "npm", "install"/ && text !~ %r[opt_libexec}/npm/bin]
+    if text =~ /system "npm", "install"/ && text !~ %r[opt_libexec\}/npm/bin] && formula.name !~ /^kibana(\d{2})?$/
       need_npm = "\#{Formula[\"node\"].opt_libexec\}/npm/bin"
       problem <<-EOS.undent
        Please add ENV.prepend_path \"PATH\", \"#{need_npm}"\ to def install
@@ -595,29 +656,19 @@ class FormulaAuditor
     end
 
     # Comments from default template
-    if line =~ /# PLEASE REMOVE/
-      problem "Please remove default template comments"
-    end
-    if line =~ /# Documentation:/
-      problem "Please remove default template comments"
-    end
-    if line =~ /# if this fails, try separate make\/make install steps/
-      problem "Please remove default template comments"
-    end
-    if line =~ /# The URL of the archive/
-      problem "Please remove default template comments"
-    end
-    if line =~ /## Naming --/
-      problem "Please remove default template comments"
-    end
-    if line =~ /# if your formula requires any X11\/XQuartz components/
-      problem "Please remove default template comments"
-    end
-    if line =~ /# if your formula fails when building in parallel/
-      problem "Please remove default template comments"
-    end
-    if line =~ /# Remove unrecognized options if warned by configure/
-      problem "Please remove default template comments"
+    [
+      "# PLEASE REMOVE",
+      "# Documentation:",
+      "# if this fails, try separate make/make install steps",
+      "# The URL of the archive",
+      "## Naming --",
+      "# if your formula requires any X11/XQuartz components",
+      "# if your formula fails when building in parallel",
+      "# Remove unrecognized options if warned by configure",
+    ].each do |comment|
+      if line.include? comment
+        problem "Please remove default template comments"
+      end
     end
 
     # FileUtils is included in Formula
@@ -762,6 +813,11 @@ class FormulaAuditor
       problem "Use MacOS.version instead of MACOS_VERSION"
     end
 
+    # TODO: comment out this after core code and formulae separation.
+    # if line =~ /MACOS_FULL_VERSION/
+    #   problem "Use MacOS.full_version instead of MACOS_FULL_VERSION"
+    # end
+
     cats = %w[leopard snow_leopard lion mountain_lion].join("|")
     if line =~ /MacOS\.(?:#{cats})\?/
       problem "\"#{$&}\" is deprecated, use a comparison to MacOS.version instead"
@@ -822,6 +878,14 @@ class FormulaAuditor
       if line =~ /(require ["']formula["'])/
         problem "`#{$1}` is now unnecessary"
       end
+
+      if line =~ %r{#\{share\}/#{formula.name}[/'"]}
+        problem "Use \#{pkgshare} instead of \#{share}/#{formula.name}"
+      end
+
+      if line =~ %r{share/"#{formula.name}[/'"]}
+        problem "Use pkgshare instead of (share/\"#{formula.name}\")"
+      end
     end
   end
 
@@ -850,19 +914,13 @@ class FormulaAuditor
   def audit_prefix_has_contents
     return unless formula.prefix.directory?
 
-    Pathname.glob("#{formula.prefix}/**/*") do |file|
-      next if file.directory?
-      basename = file.basename.to_s
-      next if Metafiles.copy?(basename)
-      next if %w[.DS_Store INSTALL_RECEIPT.json].include?(basename)
-      return
+    if Keg.new(formula.prefix).empty_installation?
+      problem <<-EOS.undent
+        The installation seems to be empty. Please ensure the prefix
+        is set correctly and expected files are installed.
+        The prefix configure/make argument may be case-sensitive.
+      EOS
     end
-
-    problem <<-EOS.undent
-      The installation seems to be empty. Please ensure the prefix
-      is set correctly and expected files are installed.
-      The prefix configure/make argument may be case-sensitive.
-    EOS
   end
 
   def audit_conditional_dep(dep, condition, line)
@@ -890,8 +948,10 @@ class FormulaAuditor
     audit_formula_name
     audit_class
     audit_specs
+    audit_revision
     audit_desc
     audit_homepage
+    audit_bottle_spec
     audit_github_repository
     audit_deps
     audit_conflicts

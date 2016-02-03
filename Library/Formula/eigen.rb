@@ -1,25 +1,24 @@
 class Eigen < Formula
   desc "C++ template library for linear algebra"
   homepage "http://eigen.tuxfamily.org/"
-  url "https://bitbucket.org/eigen/eigen/get/3.2.5.tar.bz2"
-  sha256 "5f6e6cb88188e34185f43cb819d7dab9b48ef493774ff834e568f4805d3dc2f9"
+  url "https://bitbucket.org/eigen/eigen/get/3.2.7.tar.bz2"
+  sha256 "e58e1a11b23cf2754e32b3c5990f318a8461a3613c7acbf6035870daa45c2f3e"
+  head "https://bitbucket.org/eigen/eigen", :using => :hg
 
   bottle do
     cellar :any_skip_relocation
-    sha256 "3aeee20403f303f5995044ccebaf6646211c01ede3ec159afd7b2c257aacd677" => :el_capitan
-    sha256 "6f3d26b12625d87f96a92c0c14745c444889377d7990aed6d43ae373e5647f42" => :yosemite
-    sha256 "38a61f7b2d6926411b14bf93b685d35ba8648993f1f35e3fe98c024de811e310" => :mavericks
-    sha256 "96ae43217989839b2adbc41dd43a4a02dd6346b4847b93935c5dc481091a7585" => :mountain_lion
+    sha256 "ea741c72d042b9039c635ac305e167c8593b42f7292c64120f9d9d49be10adca" => :el_capitan
+    sha256 "a087266ae637069e7270b900dcfd5960b288da8bea79ce8f5ff5fd57aaadaa92" => :yosemite
+    sha256 "54102540761296a10483f3f5d1938c9de050c71876746f937564bce2cad7e262" => :mavericks
   end
-
-  head "https://bitbucket.org/eigen/eigen", :using => :hg
-
-  depends_on "cmake" => :build
 
   option :universal
 
+  depends_on "cmake" => :build
+
   def install
     ENV.universal_binary if build.universal?
+
     mkdir "eigen-build" do
       args = std_cmake_args
       args << "-Dpkg_config_libdir=#{lib}" << ".."
@@ -45,6 +44,6 @@ class Eigen < Formula
       }
     EOS
     system ENV.cxx, "test.cpp", "-I#{include}/eigen3", "-o", "test"
-    assert_equal `./test`.split, %w[3 -1 2.5 1.5]
+    assert_equal %w[3 -1 2.5 1.5], shell_output("./test").split
   end
 end

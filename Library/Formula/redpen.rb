@@ -1,15 +1,17 @@
 class Redpen < Formula
   desc "Proofreading tool to help writers of technical documentation"
   homepage "http://redpen.cc/"
-  url "https://github.com/recruit-tech/redpen/releases/download/v1.3.0/redpen-1.3.0.tar.gz"
-  sha256 "3e3aa98fb83acb6c4db96dcc5c44e02fee211dc3edf0fad9cecf1eb374df3e8b"
+  url "https://github.com/redpen-cc/redpen/releases/download/redpen-1.4.3/redpen-1.4.3.tar.gz"
+  sha256 "31652d23367f05e77cd9ab2be045844136d2d7772513e23ef503200a54f8c298"
+
+  bottle :unneeded
 
   depends_on :java => "1.8"
 
   def install
     # Don't need Windows files.
     rm_f Dir["bin/*.bat"]
-    libexec.install %w[conf lib sample-doc]
+    libexec.install %w[conf lib sample-doc js]
 
     prefix.install "bin"
     bin.env_script_all_files(libexec/"bin", Language::Java.java_home_env("1.8"))
