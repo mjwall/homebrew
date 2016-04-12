@@ -1,32 +1,31 @@
 class Mono < Formula
   desc "Cross platform, open source .NET development framework"
   homepage "http://www.mono-project.com/"
-  url "http://download.mono-project.com/sources/mono/mono-4.2.1.102.tar.bz2"
-  sha256 "b7b461fe04375f621d88166ba8c6f1cb33c439fd3e17136460f7d087a51ed792"
-  revision 1
+  url "http://download.mono-project.com/sources/mono/mono-4.2.3.4.tar.bz2"
+  sha256 "4703d390416a6e9977585f13711f59a6d54431086c2dbacee49888dcc31937be"
 
   # xbuild requires the .exe files inside the runtime directories to
   # be executable
   skip_clean "lib/mono"
 
   bottle do
-    sha256 "af939c83b4896ef34306b310deade23530d195749bb868dc1dd504cc9f1acc5b" => :el_capitan
-    sha256 "aa3ae4ac79b5b8c502c9d43449332e04b7d6cc69c4380b00e2c5f033ea1ffbc9" => :yosemite
-    sha256 "54e408d1a43ffbf6c023bb608c6785996c810305551b3d296f34e1126900e55c" => :mavericks
+    sha256 "497caf59e4ec884f8e027850f260e74b4eb396db1522177461759404af9a98f2" => :el_capitan
+    sha256 "ed0d5c49e0fedc6ceb51a2a787ef261f6d5d0d712ae4c1436054cf3eb7ef1582" => :yosemite
+    sha256 "397237006223604ca29a0c7b826d935e1d262df76de49255a9e25806cfe4db52" => :mavericks
   end
 
   conflicts_with "czmq", :because => "both install `makecert` binaries"
 
   option "without-fsharp", "Build without support for the F# language."
 
-  resource "fsharp" do
-    url "https://github.com/fsharp/fsharp.git", :tag => "4.0.1.0",
-        :revision => "b22167013d1f4f0c41107fd40935dc1a8fe46386"
-  end
-
   depends_on "automake" => :build
   depends_on "autoconf" => :build
   depends_on "pkg-config" => :build
+
+  resource "fsharp" do
+    url "https://github.com/fsharp/fsharp.git", :tag => "4.0.1.0",
+                                                :revision => "b22167013d1f4f0c41107fd40935dc1a8fe46386"
+  end
 
   link_overwrite "bin/fsharpi"
   link_overwrite "bin/fsharpiAnyCpu"
@@ -65,6 +64,14 @@ class Mono < Formula
         system "make", "install"
       end
     end
+  end
+
+  def caveats; <<-EOS.undent
+    To use the assemblies from other formulae you need to set:
+      export MONO_GAC_PREFIX="#{HOMEBREW_PREFIX}"
+    Note that the 'mono' formula now includes F#. If you have
+    the 'fsharp' formula installed, remove it with 'brew uninstall fsharp'.
+    EOS
   end
 
   test do
@@ -133,13 +140,5 @@ class Mono < Formula
       EOS
       system "#{bin}/xbuild", "test.fsproj"
     end
-  end
-
-  def caveats; <<-EOS.undent
-    To use the assemblies from other formulae you need to set:
-      export MONO_GAC_PREFIX="#{HOMEBREW_PREFIX}"
-    Note that the 'mono' formula now includes F#. If you have
-    the 'fsharp' formula installed, remove it with 'brew uninstall fsharp'.
-    EOS
   end
 end

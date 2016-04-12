@@ -1,22 +1,22 @@
 class Ansible < Formula
   desc "Automate deployment, configuration, and upgrading"
   homepage "http://www.ansible.com"
-  url "https://releases.ansible.com/ansible/ansible-2.0.0.2.tar.gz"
-  sha256 "27db0b99113fab85b1430c361c7790a0aa7f5c614c9af13362e2adbba07e5828"
+  url "https://releases.ansible.com/ansible/ansible-2.0.1.0.tar.gz"
+  sha256 "cddc4fa6af4c1be6cd1d6634de1bd0397abad921c76b32cab6722c042744ee5d"
 
   head "https://github.com/ansible/ansible.git", :branch => "devel"
 
   bottle do
-    revision 1
-    sha256 "c218d673fd8e98cbc08e6431d6987ece23724a4cd34aaaad9615c556085c8459" => :el_capitan
-    sha256 "ec1564b7f079c608e952883e00d2cd1132f6db2d7dc771a5e8b62a109274ea72" => :yosemite
-    sha256 "beb6175753b9f105ed475f5b5db738a164cdadb3e8e6408d4c8b98c1b4b525b9" => :mavericks
+    revision 2
+    sha256 "457a6bcbe29bde7543544dbd44d702e9d6ee51135dc59687cd923f8737a3d31d" => :el_capitan
+    sha256 "339d9bc27942b45d7322f6960422718523a92dbd167869bb3f5cb80d54075369" => :yosemite
+    sha256 "d0684bc344e8bfee3ecdc79316c24b57cf06c1417cc84a79643c10d81ea74d96" => :mavericks
   end
 
   devel do
-    url "https://releases.ansible.com/ansible/ansible-2.0.1.0-0.1.rc1.tar.gz"
-    sha256 "ab2230f22d742e1379c72a3a59b18779a6aad2b4db69e87e073478028f51b24b"
-    version "2.0.1.0-0.1.rc1"
+    url "https://releases.ansible.com/ansible/ansible-2.0.1.0-0.2.rc2.tar.gz"
+    sha256 "4807f8e4b6c70ea1eca6bb3131c19e17d835d2e8884a63d107a842007430285a"
+    version "2.0.1.0-0.2.rc2"
   end
 
   depends_on :python if MacOS.version <= :snow_leopard
@@ -79,8 +79,8 @@ class Ansible < Formula
   end
 
   resource "cryptography" do
-    url "https://pypi.python.org/packages/source/c/cryptography/cryptography-1.1.2.tar.gz"
-    sha256 "7f51459f84d670444275e615839f4542c93547a12e938a0a4906dafe5f7de153"
+    url "https://pypi.python.org/packages/source/c/cryptography/cryptography-1.2.3.tar.gz"
+    sha256 "8eb11c77dd8e73f48df6b2f7a7e16173fe0fe8fdfe266232832e88477e08454e"
   end
 
   resource "enum34" do
@@ -205,6 +205,14 @@ class Ansible < Formula
   end
 
   #
+  # apache libcloud (for Google GCE cupport)
+  #
+  resource "apache-libcloud" do
+    url "https://pypi.python.org/packages/source/a/apache-libcloud/apache-libcloud-0.20.1.tar.gz"
+    sha256 "f36dcf8e6a4270c86b521ab4868fd762a7ec217195e126a8ccb028a82cf55466"
+  end
+
+  #
   # pyrax (for Rackspace support)
   #
   resource "Babel" do
@@ -215,6 +223,11 @@ class Ansible < Formula
   resource "debtcollector" do
     url "https://pypi.python.org/packages/source/d/debtcollector/debtcollector-1.2.0.tar.gz"
     sha256 "6467a3a074f0f042dc610f994c4f67a26d10f4e2e6b4d12adfb8380dc7a5d169"
+  end
+
+  resource "dnspython" do
+    url "https://pypi.python.org/packages/source/d/dnspython/dnspython-1.12.0.zip"
+    sha256 "63bd1fae61809eedb91f84b2185816fac1270ae51494fbdd36ea25f904a8502f"
   end
 
   resource "funcsigs" do

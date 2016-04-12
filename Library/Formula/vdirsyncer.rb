@@ -1,15 +1,15 @@
 class Vdirsyncer < Formula
   desc "Synchronize calendars and contacts"
-  homepage "https://github.com/untitaker/vdirsyncer"
-  url "https://pypi.python.org/packages/source/v/vdirsyncer/vdirsyncer-0.8.1.tar.gz"
-  sha256 "e8602a5df862124351dec92515019b2875616cc90c15499b681d8c6e38a66ea9"
-  head "https://github.com/untitaker/vdirsyncer.git"
+  homepage "https://github.com/pimutils/vdirsyncer"
+  url "https://pypi.python.org/packages/source/v/vdirsyncer/vdirsyncer-0.9.3.tar.gz"
+  sha256 "8ca2941bb99c5b67f0f9e7cae3dd65fcbd64b8969515c68d44e6f3cd9cfc50f2"
+  head "https://github.com/pimutils/vdirsyncer"
 
   bottle do
     cellar :any_skip_relocation
-    sha256 "3e3c80133837612fa01f67ad2aa9e31a223cdce1b9bda5a86e38eb3ff990eb91" => :el_capitan
-    sha256 "d122eba87dd4803ea2bede1e14fd6a2e8b0948304e7ab0fbbaa3e1fa13b9e6d3" => :yosemite
-    sha256 "f86595a99ca075a69a1acaccab1adfb0475bcfa1be1b6a53428b6505d4b154f3" => :mavericks
+    sha256 "9c25cd5c088f307313665ecfaaf05fb0a488e47726c0ddd1b9e4598d23f6eb68" => :el_capitan
+    sha256 "0548f52a96390a18135e225830960ba4e17b96b5f618aced7e1020525ae45813" => :yosemite
+    sha256 "e78fe3a683ced25d2a33e4872aca886d3b1d9c53f14d268e747e2673518c06b9" => :mavericks
   end
 
   option "with-remotestorage", "Build with support for remote-storage"
@@ -17,13 +17,13 @@ class Vdirsyncer < Formula
   depends_on :python3
 
   resource "requests_oauthlib" do
-    url "https://pypi.python.org/packages/source/r/requests-oauthlib/requests-oauthlib-0.6.0.tar.gz"
-    sha256 "2a0ca56031940e917983aa1584b9d1311769ff9fc9bbf01e06c7f75ade7c7724"
+    url "https://pypi.python.org/packages/source/r/requests-oauthlib/requests-oauthlib-0.6.1.tar.gz"
+    sha256 "905306080ec0cc6b3c65c8101f471fccfdb9994c16dd116524fd3fc0790d46d7"
   end
 
   resource "click" do
-    url "https://pypi.python.org/packages/source/c/click/click-5.1.tar.gz"
-    sha256 "678c98275431fad324275dec63791e4a17558b40e5a110e20a82866139a85a5a"
+    url "https://pypi.python.org/packages/source/c/click/click-6.3.tar.gz"
+    sha256 "b720d9faabe193287b71e3c26082b0f249501288e153b7e7cfce3bb87ac8cc1c"
   end
 
   resource "click_threading" do
@@ -32,8 +32,8 @@ class Vdirsyncer < Formula
   end
 
   resource "click_log" do
-    url "https://pypi.python.org/packages/source/c/click-log/click-log-0.1.1.tar.gz"
-    sha256 "0bc7e69311007adc4b5304d47933761999a43a18a87b9b7f2aa12b5e256f72fc"
+    url "https://pypi.python.org/packages/source/c/click-log/click-log-0.1.3.tar.gz"
+    sha256 "fd8dc8d65947ce6d6ee8ab3101fb0bb9015b9070730ada3f73ec761beb0ead4d"
   end
 
   resource "requests" do
@@ -42,18 +42,18 @@ class Vdirsyncer < Formula
   end
 
   resource "requests-toolbelt" do
-    url "https://pypi.python.org/packages/source/r/requests-toolbelt/requests-toolbelt-0.5.1.tar.gz"
-    sha256 "4f4be5325cf4af12847252406eefca8e9d1cd3cfb23a377aaac5cea32d55d23e"
+    url "https://pypi.python.org/packages/source/r/requests-toolbelt/requests-toolbelt-0.6.0.tar.gz"
+    sha256 "cc4e9c0ef810d6dfd165ca680330b65a4cf8a3f08f5f08ecd50a0253a08e541f"
   end
 
   resource "lxml" do
-    url "https://pypi.python.org/packages/source/l/lxml/lxml-3.4.4.tar.gz"
-    sha256 "b3d362bac471172747cda3513238f115cbd6c5f8b8e6319bf6a97a7892724099"
+    url "https://pypi.python.org/packages/source/l/lxml/lxml-3.5.0.tar.gz"
+    sha256 "349f93e3a4b09cc59418854ab8013d027d246757c51744bf20069bc89016f578"
   end
 
   resource "atomicwrites" do
-    url "https://pypi.python.org/packages/source/a/atomicwrites/atomicwrites-0.1.5.tar.gz"
-    sha256 "9b16a8f1d366fb550f3d5a5ed4587022735f139a4187735466f34cf4577e4eaa"
+    url "https://pypi.python.org/packages/source/a/atomicwrites/atomicwrites-0.1.9.tar.gz"
+    sha256 "7cdfcee8c064bc0ba30b0444ba0919ebafccf5b0b1916c8cde07e410042c4023"
   end
 
   def install

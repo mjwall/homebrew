@@ -1,15 +1,15 @@
 class Godep < Formula
   desc "dependency tool for go"
   homepage "https://godoc.org/github.com/tools/godep"
-  url "https://github.com/tools/godep/archive/v52.tar.gz"
-  sha256 "37a526b6af329b05f81ec92b72488b2a4cdc8457aa9ac5643ca20c28844e277d"
+  url "https://github.com/tools/godep/archive/v60.tar.gz"
+  sha256 "a9dafa87d571dfc817e9e101b20a856c534951d52059cf5af1be599d88b7e6d6"
   head "https://github.com/tools/godep.git"
 
   bottle do
     cellar :any_skip_relocation
-    sha256 "409ac8aa9b0f4bf0d3f4a9faf39f34c5e3a1063c4ce04db167f61bd7f4ec54be" => :el_capitan
-    sha256 "33c558efd4a57d673990f1f51aa44c22ece4a9edc1f53d2c34e4179ec941434a" => :yosemite
-    sha256 "3c317d7a74cd5a6446a1c2bbba024e0cb0d2800fe86f9814d07a199c0fcd1aa2" => :mavericks
+    sha256 "6a98cc7975cba797f43efc0938742e8d0c2304e8965ae870183415547752b1e4" => :el_capitan
+    sha256 "f294ee34bdb28ae397f00f75539dc59745b7ad32da50ca61d7f36fa27afe2238" => :yosemite
+    sha256 "ef53ad3a373f5e3eac92f2b695640a9633266681f8891278ce135d47d345de9e" => :mavericks
   end
 
   depends_on "go"
@@ -25,6 +25,7 @@ class Godep < Formula
   end
 
   test do
+    ENV["GO15VENDOREXPERIMENT"] = "0"
     mkdir "Godeps"
     (testpath/"Godeps/Geodeps.json").write <<-EOS.undent
       {

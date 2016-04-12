@@ -3,29 +3,51 @@ class Dmd < Formula
   homepage "https://dlang.org/"
 
   stable do
-    url "https://github.com/D-Programming-Language/dmd/archive/v2.070.0.tar.gz"
-    sha256 "22f47168af3f4106668f816c0e7a99b8db364fbe5324a5e763a209b9e74c0ee8"
+    url "https://github.com/D-Programming-Language/dmd/archive/v2.070.2.tar.gz"
+    sha256 "4e7376f1b9a6ea08e99d13c4badf9ed3fe124a38e18fea61d27fdf5ed018ba7a"
 
     resource "druntime" do
-      url "https://github.com/D-Programming-Language/druntime/archive/v2.070.0.tar.gz"
-      sha256 "7ef1290d8482af5eb9d9744ca133488a3320db2a657bc5a9fdff846f56ba53f3"
+      url "https://github.com/D-Programming-Language/druntime/archive/v2.070.2.tar.gz"
+      sha256 "bd4b73fb005f5b1d25b49c9c1f1747dfe9dbcdf1ddaf8e255ed037d10ce8e368"
     end
 
     resource "phobos" do
-      url "https://github.com/D-Programming-Language/phobos/archive/v2.070.0.tar.gz"
-      sha256 "b5cb9559b01e713ac1dd282648710d4a78f8228da778b4508a7b302877b82b6c"
+      url "https://github.com/D-Programming-Language/phobos/archive/v2.070.2.tar.gz"
+      sha256 "0b3825a3751247a916f25aca52fd78374cbea778d429b081c52ef7ece57a7e4a"
     end
 
     resource "tools" do
-      url "https://github.com/D-Programming-Language/tools/archive/v2.070.0.tar.gz"
-      sha256 "a2864c8b440fec843d80f70e13ab8e7873f370d5bcca56fe272d94e3ba9afb77"
+      url "https://github.com/D-Programming-Language/tools/archive/v2.070.2.tar.gz"
+      sha256 "e006b8f935a9b0991221baa5b2ff615003bb099149b3f736db8780c65519d80e"
     end
   end
 
   bottle do
-    sha256 "793b9a504c6df3e7f1a1dbeec00fbd20d660a07faee731a303b3c71a07a1ff0f" => :el_capitan
-    sha256 "b3809e8463025fec4174e8e694a2ec8ae5fe3763bae2036cab425a35b0332496" => :yosemite
-    sha256 "a64e72d53b6a0452769cce6010fa185a2283030804bfb20ffbce13f55b8be415" => :mavericks
+    revision 1
+    sha256 "42d01357a030077af310c5f873aa539d27a41a29785f9882880ca85adc37ff47" => :el_capitan
+    sha256 "3f95013991bb5e260ffc51ff339b1f9da7ed78234e7817b63ab40c79d4ac775a" => :yosemite
+    sha256 "72e67e06cdf18d34c7fe849db3ad45d5439a037be2f39fbf425bcc898953a1e7" => :mavericks
+  end
+
+  devel do
+    url "https://github.com/D-Programming-Language/dmd/archive/v2.071.0-b2.tar.gz"
+    sha256 "4a75866c357feb2d7d328775671fc2e97a8368d25ca2732d4bc532a957a480a1"
+    version "2.071.0-b2"
+
+    resource "druntime" do
+      url "https://github.com/D-Programming-Language/druntime/archive/v2.071.0-b2.tar.gz"
+      sha256 "7a2af258fbf36ea6e0fd2f25710c5b842da443c2e884724c41ccd7890b99a7d6"
+    end
+
+    resource "phobos" do
+      url "https://github.com/D-Programming-Language/phobos/archive/v2.071.0-b2.tar.gz"
+      sha256 "69c112ea8f7673d397e81dd0bec0ce234fce750cfcd2857e1787bae0b2c4f436"
+    end
+
+    resource "tools" do
+      url "https://github.com/D-Programming-Language/tools/archive/v2.071.0-b2.tar.gz"
+      sha256 "e80f934f814f96aee90ef511c7829608e23d2dfb4f920c86128c6c15f3ddb37c"
+    end
   end
 
   head do
@@ -59,7 +81,7 @@ class Dmd < Formula
     # linked into opt by the time this build runs:
     conf.write <<-EOS.undent
         [Environment]
-        DFLAGS=-I#{include}/d2 -L-L#{lib}
+        DFLAGS=-I#{include}/dlang/dmd -L-L#{lib}
         EOS
     etc.install conf
     install_new_dmd_conf
@@ -72,8 +94,8 @@ class Dmd < Formula
     system "make", "-C", "druntime", *make_args
     system "make", "-C", "phobos", "VERSION=#{buildpath}/VERSION", *make_args
 
-    (include/"d2").install Dir["druntime/import/*"]
-    cp_r ["phobos/std", "phobos/etc"], include/"d2"
+    (include/"dlang/dmd").install Dir["druntime/import/*"]
+    cp_r ["phobos/std", "phobos/etc"], include/"dlang/dmd"
     lib.install Dir["druntime/lib/*", "phobos/**/libphobos2.a"]
 
     resource("tools").stage do

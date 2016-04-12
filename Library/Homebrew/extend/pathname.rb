@@ -27,17 +27,27 @@ module DiskUsageExtension
 
   def compute_disk_usage
     if directory?
+      scanned_files = Set.new
       @file_count = 0
       @disk_usage = 0
       find do |f|
-        if !f.directory? && !f.symlink? && f.basename.to_s != ".DS_Store"
-          @file_count += 1
-          @disk_usage += f.size
+        if f.directory?
+          @disk_usage += f.lstat.size
+        else
+          @file_count += 1 if f.basename.to_s != ".DS_Store"
+          # use Pathname#lstat instead of Pathname#stat to get info of symlink itself.
+          stat = f.lstat
+          file_id = [stat.dev, stat.ino]
+          # count hardlinks only once.
+          unless scanned_files.include?(file_id)
+            @disk_usage += stat.size
+            scanned_files.add(file_id)
+          end
         end
       end
     else
       @file_count = 1
-      @disk_usage = size
+      @disk_usage = lstat.size
     end
   end
 end
@@ -82,6 +92,7 @@ class Pathname
     src = Pathname(src)
     dst = join(new_basename)
     dst = yield(src, dst) if block_given?
+    return unless dst
 
     mkpath
 
@@ -129,6 +140,12 @@ class Pathname
     raise "Will not overwrite #{self}" if exist?
     dirname.mkpath
     open("w", *open_args) { |f| f.write(content) }
+  end
+
+  # Only appends to a file that is already created.
+  def append_lines(content, *open_args)
+    raise "Cannot append file that doesn't exist: #{self}" unless exist?
+    open("a", *open_args) { |f| f.puts(content) }
   end
 
   def binwrite(contents, *open_args)
@@ -232,7 +249,7 @@ class Pathname
   # @private
   def version
     require "version"
-    Version.parse(self)
+    Version.parse(basename)
   end
 
   # @private
@@ -291,12 +308,6 @@ class Pathname
       open("rb") { |f| digest << buf while f.read(16384, buf) }
     end
     digest.hexdigest
-  end
-
-  # @private
-  def sha1
-    require "digest/sha1"
-    incremental_hash(Digest::SHA1)
   end
 
   def sha256

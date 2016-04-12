@@ -3,14 +3,14 @@ class Osquery < Formula
   homepage "https://osquery.io"
   # pull from git tag to get submodules
   url "https://github.com/facebook/osquery.git",
-    :tag => "1.6.2",
-    :revision => "5a66d5b8383fa6b5b2164b98a7c415279178bdc4"
+    :tag => "1.7.3",
+    :revision => "6901aa644a9bcc0667207008db71471abf756b82"
 
   bottle do
     cellar :any
-    sha256 "6b7e6e4fe991cbf97303c8a365b061279cc5fff37903cbb712cc983a15599641" => :el_capitan
-    sha256 "ea2e2bd9df104970b40d4b7bda9258da74493efe0b8a75bf184882a8dda49b6a" => :yosemite
-    sha256 "3ca9e59d9eaedc9fa7d7c8a48adf15ae882194871ec9600bfbdcf64e58743be8" => :mavericks
+    sha256 "a9718d01a0642a33aefc7a6cda0dc996d2fa7707e9dd5f10942a8d4c5cece4b7" => :el_capitan
+    sha256 "62c7ed026f600e068a51b5e47e942db0abd7228a7771f5d3663c6f91e4b393a5" => :yosemite
+    sha256 "41a65205774cef19419abcb41b8609ff1488c34fe076217dab8720ad48731516" => :mavericks
   end
 
   # osquery only supports OS X 10.9 and above. Do not remove this.
@@ -66,7 +66,8 @@ class Osquery < Formula
       end
     end
 
-    system "cmake", ".", *std_cmake_args
+    # Append libboost_thread-mt since osquery expects cpp-netlib-0.12.
+    system "cmake", ".", "-DCMAKE_EXE_LINKER_FLAGS=-lboost_thread-mt", *std_cmake_args
     system "make"
     system "make", "install"
   end

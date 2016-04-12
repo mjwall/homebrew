@@ -301,10 +301,9 @@ class FormulaAuditorTests < Homebrew::TestCase
   end
 
   # Regression test for https://github.com/Homebrew/homebrew/pull/48744
-  # Formulae with "++" in their name would break the name check because of a
-  # regexp error:
+  # Formulae with "++" in their name would break various audit regexps:
   #   Error: nested *?+ in regexp: /^libxml++3\s/
-  def test_audit_desc_plus_plus_name
+  def test_audit_plus_plus_name
     fa = formula_auditor "foolibc++", <<-EOS.undent, :strict => true
       class Foolibcxx < Formula
         desc "foolibc++ is a test"
@@ -315,5 +314,47 @@ class FormulaAuditorTests < Homebrew::TestCase
     fa.audit_desc
     assert_equal "Description shouldn't include the formula name",
       fa.problems.shift
+
+    fa.audit_line 'ohai "#{share}/foolibc++"', 3
+    assert_equal "Use \#{pkgshare} instead of \#{share}/foolibc++", fa.problems.shift
+
+    fa.audit_line 'ohai share/"foolibc++"', 3
+    assert_equal 'Use pkgshare instead of (share/"foolibc++")', fa.problems.shift
+  end
+
+  def test_audit_line_space_in_class_inheritance
+    fa = formula_auditor "foo", "class Foo<Formula; url '/foo-1.0.tgz'; end"
+    fa.audit_line "class Foo<Formula", 1
+    assert_equal "Use a space in class inheritance: class Foo < Formula",
+      fa.problems.shift
+  end
+
+  def test_audit_line_default_template
+    fa = formula_auditor "foo", "class Foo < Formula; url '/foo-1.0.tgz'; end"
+
+    fa.audit_line '# system "cmake", ".", *std_cmake_args', 3
+    assert_equal "Commented cmake call found",
+      fa.problems.shift
+
+    fa.audit_line "# PLEASE REMOVE", 3
+    assert_equal "Please remove default template comments",
+      fa.problems.shift
+  end
+
+  def test_audit_github_repository_no_api
+    fa = formula_auditor "foo", <<-EOS.undent, :strict => true, :online => true
+      class Foo < Formula
+        homepage "https://github.com/example/example"
+        url "http://example.com/foo-1.0.tgz"
+      end
+    EOS
+
+    original_value = ENV["HOMEBREW_NO_GITHUB_API"]
+    ENV["HOMEBREW_NO_GITHUB_API"] = "1"
+
+    fa.audit_github_repository
+    assert_equal [], fa.problems
+  ensure
+    ENV["HOMEBREW_NO_GITHUB_API"] = original_value
   end
 end

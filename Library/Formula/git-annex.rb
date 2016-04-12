@@ -5,15 +5,15 @@ class GitAnnex < Formula
 
   desc "Manage files with git without checking in file contents"
   homepage "https://git-annex.branchable.com/"
-  url "https://hackage.haskell.org/package/git-annex-6.20160126/git-annex-6.20160126.tar.gz"
-  sha256 "dc59f670a3d0bdb90db8fc6cadba8003708219bb0dc3d56867a9246d825c0d11"
+  url "https://hackage.haskell.org/package/git-annex-6.20160318/git-annex-6.20160318.tar.gz"
+  sha256 "5c0067d161a3cd6b93822f85eb82e5cb4895d913b2593bc4fe3b74d3ed426e0b"
 
   head "git://git-annex.branchable.com/"
 
   bottle do
-    sha256 "fc72bb7797ef9255bc4ef2adb0b3a7c671970616975110effcbc3376a34285aa" => :el_capitan
-    sha256 "b95279374ca667e4df00832ac98b141f4e2f7a5a4f291376c8c81b9c120f245d" => :yosemite
-    sha256 "fbe1d8cdb78da0487a39d207af270756af9c6da102cc70b8dfc76a284c520247" => :mavericks
+    sha256 "dc6f7f776503ac93fe17e5ed464d4b965608117616bb9019d88949dfea938645" => :el_capitan
+    sha256 "e50e95ee15709b5361bc902e2ef94175e522da084b29e2fa29cf4dc9b7ada095" => :yosemite
+    sha256 "e138769b1201e9a0a6328d64ca9c01353ec94ac5ac5fb61d0a816fe31e79f36f" => :mavericks
   end
 
   option "with-git-union-merge", "Build the git-union-merge tool"
@@ -23,6 +23,7 @@ class GitAnnex < Formula
   depends_on "pkg-config" => :build
   depends_on "gsasl"
   depends_on "libidn"
+  depends_on "libmagic"
   depends_on "gnutls"
   depends_on "quvi"
 
@@ -41,6 +42,24 @@ class GitAnnex < Formula
   test do
     # make sure git can find git-annex
     ENV.prepend_path "PATH", bin
-    system "git", "annex", "test"
+    # We don't want this here or it gets "caught" by git-annex.
+    rm_r "Library/Python/2.7/lib/python/site-packages/homebrew.pth"
+
+    system "git", "init"
+    system "git", "annex", "init"
+    (testpath/"Hello.txt").write "Hello!"
+    assert !File.symlink?("Hello.txt")
+    assert_match "add Hello.txt ok", shell_output("git annex add .")
+    system "git", "commit", "-a", "-m", "Initial Commit"
+    assert File.symlink?("Hello.txt")
+
+    # The steps below are necessary to ensure the directory cleanly deletes.
+    # git-annex guards files in a way that isn't entirely friendly of automatically
+    # wiping temporary directories in the way `brew test` does at end of execution.
+    system "git", "rm", "Hello.txt", "-f"
+    system "git", "commit", "-a", "-m", "Farewell!"
+    system "git", "annex", "unused"
+    assert_match "dropunused 1 ok", shell_output("git annex dropunused 1 --force")
+    system "git", "annex", "uninit"
   end
 end

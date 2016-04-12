@@ -3,12 +3,14 @@ class LibjsonRpcCpp < Formula
   homepage "https://github.com/cinemast/libjson-rpc-cpp"
   url "https://github.com/cinemast/libjson-rpc-cpp/archive/v0.6.0.tar.gz"
   sha256 "98baf15e51514339be54c01296f0a51820d2d4f17f8c9d586f1747be1df3290b"
+  head "https://github.com/cinemast/libjson-rpc-cpp.git"
+  revision 1
 
   bottle do
     cellar :any
-    sha256 "b80a2f4618128083bbb25df7eb6b541eca7ae740ddbd931cd5e2067cc4366d6b" => :el_capitan
-    sha256 "fd3c31a721cdb7bae7390e063f90a7979a3e0021ac1df1a2ed16957f2971ff00" => :yosemite
-    sha256 "6daf0f22b4917f78226424660e28da52a6aec83183b604ebe94e35bc2a593e95" => :mavericks
+    sha256 "f27340f082f29eb626411d0d17f1a5436abbe1eb01e3243b4a8923893e68d3a1" => :el_capitan
+    sha256 "ab5deb325fcf3edfcc03c2b4b7d22803c63c4722af4162c3076c58850629879b" => :yosemite
+    sha256 "a5963cbefa7a381a8da48f16a3d86f3beb522a019a3db55b3919f789a7bc0121" => :mavericks
   end
 
   depends_on "cmake" => :build
@@ -17,6 +19,9 @@ class LibjsonRpcCpp < Formula
   depends_on "libmicrohttpd"
 
   def install
+    # https://github.com/cinemast/libjson-rpc-cpp/issues/153
+    ENV.deparallelize
+
     system "cmake", ".", *std_cmake_args
     system "make"
     system "make", "install"

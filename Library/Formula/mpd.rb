@@ -1,15 +1,20 @@
 class Mpd < Formula
   desc "Music Player Daemon"
   homepage "http://www.musicpd.org/"
-  url "http://www.musicpd.org/download/mpd/0.19/mpd-0.19.12.tar.xz"
-  sha256 "7b6fe6c7ce72f5f80a276d680072b524ecb395e546e252b8f3a0756377e1e875"
+
+  stable do
+    url "http://www.musicpd.org/download/mpd/0.19/mpd-0.19.14.tar.xz"
+    sha256 "2fd23805132e5002a4d24930001a7c7d3aaf55e3bd0cd71af5385895160e99e7"
+
+    # Fixes build because of missing patch on 0.19 branch
+    patch :DATA
+  end
 
   bottle do
     cellar :any
-    revision 1
-    sha256 "74fb8ae7870946873685a5b8c24645ea428bbc954c7085d31f54c06bff7e4df1" => :el_capitan
-    sha256 "697c3ecf1ae16ad64544bef0ffb3172bca1aa06ec2eb3169c76bb77c11ea9b72" => :yosemite
-    sha256 "4c4e2cf7804434c23511fe7cc933bdc52e300935a6cb03d41ad38bd5ea173c7e" => :mavericks
+    sha256 "a7f6e97ea94a2733006cff806c6cb7da3ab547ef75f9d52e4c92f6c22c5d5b3d" => :el_capitan
+    sha256 "a6798fb18a9b1e9e1443d236c9e9cf272a94acc32579c014d6a373c258d8d872" => :yosemite
+    sha256 "c029531f025af9e712b7b2108e81d14406c4394c46e8789ee1b9e6d13a36d22f" => :mavericks
   end
 
   head do
@@ -136,3 +141,18 @@ class Mpd < Formula
     end
   end
 end
+
+__END__
+diff --git a/src/notify.hxx b/src/notify.hxx
+index 3e62a01..c96390b 100644
+--- a/src/notify.hxx
++++ b/src/notify.hxx
+@@ -28,7 +28,7 @@ struct notify {
+	Cond cond;
+	bool pending;
+
+-#if !defined(WIN32) && !defined(__NetBSD__) && !defined(__BIONIC__)
++#ifdef __GLIBC__
+	constexpr
+ #endif
+	notify():pending(false) {}

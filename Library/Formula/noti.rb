@@ -3,21 +3,15 @@ require "language/go"
 class Noti < Formula
   desc "Displays a notification after a terminal process finishes."
   homepage "https://github.com/variadico/noti"
-  url "https://github.com/variadico/noti/archive/v1.3.0.tar.gz"
-  sha256 "78ffba8f6d8cb27df06a7c1ebe9d58cf605175c056eca1be241a5f348a117b8f"
+  url "https://github.com/variadico/noti/archive/v2.1.1.tar.gz"
+  sha256 "c31c763eb92b4600371b2a62f6dc1dbb3390d89c09e0baab7af0dc427b55a8c5"
   head "https://github.com/variadico/noti.git", :branch => "dev"
 
   bottle do
     cellar :any_skip_relocation
-    sha256 "7d892998f3bbed1ba19b9e6a1dfe00094d0123cecfa058e608538e05a38524e6" => :el_capitan
-    sha256 "0aaa37cb4cfde091dce33a9a883f1dc2c1f27756400acdc84198c418c8cb2c4c" => :yosemite
-    sha256 "2cef02d159190232c99658be80e397e6f70e78e2e80a71685c710e920afa6c40" => :mavericks
-  end
-
-  devel do
-    url "https://github.com/variadico/noti/archive/v2.0.0-rc.1.tar.gz"
-    sha256 "5ac154855f05ed60c05642030d4f66f9665e51b7032fc57e999c81160dcdf611"
-    version "2.0.0-rc.1"
+    sha256 "d35a463a362591ce41b9e609071ed876ffaa5c9540f2393a2e6bc0a20f97eea8" => :el_capitan
+    sha256 "f5cc202358c1a7409b66ec9b3b3b411fbe2b9caccbd7746ec20beb70afdfc238" => :yosemite
+    sha256 "5d655704e9f39feba5b6cf26a74be4a4dcf3bf337d18d0c0652ff4bfa2693012" => :mavericks
   end
 
   depends_on "go" => :build

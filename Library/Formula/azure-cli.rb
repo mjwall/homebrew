@@ -1,17 +1,17 @@
 class AzureCli < Formula
   desc "Official Azure CLI"
   homepage "https://github.com/azure/azure-xplat-cli"
-  url "https://github.com/azure/azure-xplat-cli/releases/download/v0.9.13-December2015/azure-cli.0.9.13.tar.gz"
-  sha256 "f91e341c499624d6ba007ef3ad79d932c5b94a1f35acc49e3fbffd76c2317317"
+  url "https://github.com/Azure/azure-xplat-cli/archive/v0.9.19-March2016.tar.gz"
+  version "0.9.19"
+  sha256 "8f0e4093a2a91097a2621f01cad435cc5856dadbe3e343c3538409e2c9386b11"
 
   head "https://github.com/azure/azure-xplat-cli.git", :branch => "dev"
 
   bottle do
     cellar :any_skip_relocation
-    revision 1
-    sha256 "ece78be41a76a480c8578098fe3a10e1db32259ad6b2007e2bf21db0cffd4ddc" => :el_capitan
-    sha256 "f72ee827bd18549ae59a7173d1c20ac8f21c2b42fd842fbeb7ae4ba1f587e6a3" => :yosemite
-    sha256 "17b053270b261c16eadbb1a1103a301237b44577d4e062ac81623a8785ef9c21" => :mavericks
+    sha256 "cb5c5ab9d2b9e451af0448a48200aa4f9bd8d0a1416bf975ba78743f68ae778f" => :el_capitan
+    sha256 "656260824be014aefff7f0c5c9a0783993c2ded0b467a900d61a181ad8497106" => :yosemite
+    sha256 "3c5be8a2921f122790e11722a54ef3a75c35144f523d0e1bf312f1c1250f14c5" => :mavericks
   end
 
   depends_on "node"

@@ -1,5 +1,3 @@
-#!/System/Library/Frameworks/Ruby.framework/Versions/Current/usr/bin/ruby -W0
-
 std_trap = trap("INT") { exit! 130 } # no backtrace thanks
 
 require "pathname"
@@ -9,6 +7,7 @@ require "global"
 
 if ARGV == %w[--version] || ARGV == %w[-v]
   puts "Homebrew #{Homebrew.homebrew_version_string}"
+  puts "Homebrew/homebrew-core #{Homebrew.core_tap_version_string}"
   exit 0
 end
 
@@ -46,15 +45,13 @@ begin
     end
   end
 
-  cmd = HOMEBREW_INTERNAL_COMMAND_ALIASES.fetch(cmd, cmd)
-
   # Add contributed commands to PATH before checking.
   Dir["#{HOMEBREW_LIBRARY}/Taps/*/*/cmd"].each do |tap_cmd_dir|
     ENV["PATH"] += "#{File::PATH_SEPARATOR}#{tap_cmd_dir}"
   end
 
   # Add SCM wrappers.
-  ENV["PATH"] += "#{File::PATH_SEPARATOR}#{HOMEBREW_LIBRARY}/ENV/scm"
+  ENV["PATH"] += "#{File::PATH_SEPARATOR}#{HOMEBREW_ENV_PATH}/scm"
 
   if cmd
     internal_cmd = require? HOMEBREW_LIBRARY_PATH.join("cmd", cmd)
@@ -104,7 +101,7 @@ begin
     end
 
     if possible_tap && !possible_tap.installed?
-      brew_uid = File.stat(HOMEBREW_BREW_FILE).uid
+      brew_uid = HOMEBREW_BREW_FILE.stat.uid
       tap_commands = []
       if Process.uid.zero? && !brew_uid.zero?
         tap_commands += %W[/usr/bin/sudo -u ##{brew_uid}]

@@ -6,7 +6,7 @@ require "global"
 require "formulary"
 
 # Test environment setup
-%w[ENV Formula].each { |d| HOMEBREW_LIBRARY.join(d).mkpath }
+(HOMEBREW_LIBRARY/"Taps/homebrew/homebrew-core/Formula").mkpath
 %w[cache formula_cache cellar logs].each { |d| HOMEBREW_PREFIX.parent.join(d).mkpath }
 
 # Test fixtures and files can be found relative to this path
@@ -30,8 +30,8 @@ module Homebrew
       assert_equal Version.new(expected), actual
     end
 
-    def assert_version_detected(expected, url)
-      assert_equal expected, Version.parse(url).to_s
+    def assert_version_detected(expected, url, specs={})
+      assert_equal expected, Version.detect(url, specs).to_s
     end
 
     def assert_version_nil(url)
