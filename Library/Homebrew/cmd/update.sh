@@ -43,6 +43,7 @@ git_init_if_necessary() {
 rename_taps_dir_if_necessary() {
   local tap_dir
   local tap_dir_basename
+  local tap_dir_hyphens
   local user
   local repo
 
@@ -56,9 +57,10 @@ rename_taps_dir_if_necessary() {
       user="$(echo "${tap_dir_basename%-*}" | tr "[:upper:]" "[:lower:]")"
       repo="$(echo "${tap_dir_basename:${#user}+1}" | tr "[:upper:]" "[:lower:]")"
       mkdir -p "$HOMEBREW_LIBRARY/Taps/$user"
-      mv "$tap_dir", "$HOMEBREW_LIBRARY/Taps/$user/homebrew-$repo"
+      mv "$tap_dir" "$HOMEBREW_LIBRARY/Taps/$user/homebrew-$repo"
 
-      if [[ ${#${tap_dir_basename//[^\-]}} -gt 1 ]]
+      tap_dir_hyphens="${tap_dir_basename//[^\-]}"
+      if [[ ${#tap_dir_hyphens} -gt 1 ]]
       then
         echo "Homebrew changed the structure of Taps like <someuser>/<sometap>." >&2
         echo "So you may need to rename $HOMEBREW_LIBRARY/Taps/$user/homebrew-$repo manually." >&2
